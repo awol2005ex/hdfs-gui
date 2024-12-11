@@ -7,15 +7,11 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
-        .plugin(
-            tauri_plugin_sql::Builder::default()
-            //数据库初始化
-            .add_migrations(db::db_init::DB_FILE, db::db_init::migrations())
-                .build(),
-        )
         .invoke_handler(tauri::generate_handler![
             //获取hdfs配置列表
-            commands::hdfs_config::get_hdfs_config_list
+            commands::hdfs_config::get_hdfs_config_list,
+            //保存hdfs配置
+            commands::hdfs_config::save_hdfs_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
