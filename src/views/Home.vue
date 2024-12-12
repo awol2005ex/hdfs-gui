@@ -48,11 +48,12 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, Ref, ref } from "vue";
-import { HdfsConfig, getHdfsConfigList,saveHdfsConfig } from "../api/hdfs_config.ts";
+import { reactive, Ref, ref,nextTick  } from "vue";
+import { HdfsConfig, getHdfsConfigList,saveHdfsConfig,getHdfsConfig } from "../api/hdfs_config.ts";
 import HdfsConfigForm from "../components/HdfsConfigForm.vue";
 import { DocumentAdd, EditPen, Delete,Connection } from "@element-plus/icons-vue";
 import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from "element-plus";
 const router = useRouter()
 const route = useRoute()
 
@@ -75,18 +76,32 @@ const AddHdfsConfigConfirm = () => {
   saveHdfsConfig(hdfsConfigForm.value?.hdfsConfigForm||{}).then((res) => {
     AddHdfsConfigDialogVisible.value = false
   }).catch((err) => {
-    console.log(err)
+    ElMessage({
+        showClose: true,
+        message: err.toString(),
+        type: "error",
+      });
   })
   
 }
 
-const editHdfsConfig = (id:number) => {
-  console.log(id)
+const editHdfsConfig = async (id:number) => {
+  AddHdfsConfigDialogVisible.value = true
+  await nextTick();
+  getHdfsConfig(id).then((res) => {
+    
+   if(hdfsConfigForm.value) {
+    hdfsConfigForm.value.setHdfsConfigForm(res)
+   }
+  }).catch((err) => {
+    ElMessage({
+        showClose: true,
+        message: err.toString(),
+        type: "error",
+      });
+  })
 }
 const deleteHdfsConfig = (id:number) => {
-  console.log(id)
-}
-const getHdfsConfig = (id:number) => {
   console.log(id)
 }
 const connectToHdfs = (id:number) => {

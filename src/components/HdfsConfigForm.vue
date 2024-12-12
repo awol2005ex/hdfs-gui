@@ -35,9 +35,17 @@ const hdfsConfigForm :Reactive<HdfsConfig> = reactive({
   hdfs_url: '',
   del_flag:0,
  });
- defineExpose({
-  hdfsConfigForm
- })
+
+
+const setHdfsConfigForm = (hdfsConfig: HdfsConfig) => {
+  hdfsConfigForm.id = hdfsConfig.id;
+  hdfsConfigForm.name = hdfsConfig.name;
+  hdfsConfigForm.hdfs_config = hdfsConfig.hdfs_config;
+  hdfsConfigForm.hdfs_url = hdfsConfig.hdfs_url;
+}
+defineExpose({
+  hdfsConfigForm,setHdfsConfigForm
+})
 
 </script>
 

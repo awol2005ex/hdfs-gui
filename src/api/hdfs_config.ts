@@ -19,3 +19,9 @@ export const saveHdfsConfig = async (hdfs_config:HdfsConfig) => {
   await invoke("save_hdfs_config", {hdfsConfig:hdfs_config});
   
 };
+
+//获取HDFS连接配置列表
+export const getHdfsConfig = async (id:number) => {
+  const result: HdfsConfig = await invoke("get_hdfs_config", {id:id});
+  return result;
+};
