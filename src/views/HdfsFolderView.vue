@@ -53,6 +53,15 @@
             </template>
           </template>
         </el-breadcrumb>
+
+        <el-input
+      v-model="search_words"
+      style="width: 240px;float: left; padding-left: 10px;"
+      placeholder="Search File"
+      :prefix-icon="Search"
+      @change="on_search_words_change"
+      clearable
+    />
       </el-header>
       <el-main>
         <el-table :data="fileListPageData" style="width: 100%">
@@ -142,7 +151,7 @@
 <script setup lang="ts">
 import { reactive, Ref, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { Back, Refresh, Folder, Document,HomeFilled } from "@element-plus/icons-vue";
+import { Back, Refresh, Folder, Document,HomeFilled,Search } from "@element-plus/icons-vue";
 import { getHdfsFileList, HdfsFile } from "../api/hdfs_file.ts";
 import { ElMessage } from "element-plus";
 const router = useRouter();
@@ -186,6 +195,26 @@ const fileListData = ref<HdfsFile[]>([]);
 
 const fileListPageData = ref<HdfsFile[]>([]);
 
+const filert_by_search_words = () => {
+  if (search_words.value == "") {
+    fileListPageData.value = fileListData.value.slice(
+      (currentPage.value - 1) * pageSize.value,
+      currentPage.value * pageSize.value
+    );
+    total.value = (fileListData.value||[]).length;
+    return;
+  }
+  const filterData= fileListData.value.filter((item) => {
+    return (item.name||"").includes(search_words.value);
+  });
+  fileListPageData.value = filterData.slice(
+      (currentPage.value - 1) * pageSize.value,
+      currentPage.value * pageSize.value
+    );
+    total.value = filterData.length;
+    return;
+}
+
 const refreshData = () => {
   getHdfsFileList(
     parseInt(route.params.id as string),
@@ -193,11 +222,7 @@ const refreshData = () => {
   )
     .then((res) => {
       fileListData.value = res;
-      total.value = res.length;
-      fileListPageData.value = res.slice(
-        (currentPage.value - 1) * pageSize.value,
-        currentPage.value * pageSize.value
-      );
+      filert_by_search_words();
     })
     .catch((err) => {
       ElMessage({
@@ -241,23 +266,25 @@ watch(route, (newRoute) => {
   refreshData();
 });
 
+
+//分页
 const pageSize = ref(10);
 const total = ref(0);
 const currentPage = ref(1);
 const handleCurrentChange = async (val: number) => {
   currentPage.value = val;
-  fileListPageData.value = fileListData.value.slice(
-    (currentPage.value - 1) * pageSize.value,
-    currentPage.value * pageSize.value
-  );
+  filert_by_search_words();
 };
 const handleSizeChange = async (val: number) => {
   pageSize.value = val;
-  fileListPageData.value = fileListData.value.slice(
-    (currentPage.value - 1) * pageSize.value,
-    currentPage.value * pageSize.value
-  );
+  filert_by_search_words();
 };
+
+const on_search_words_change = () => {
+  filert_by_search_words();
+}
+//搜索框
+const search_words= ref("");
 </script>
 
 <style scoped></style>
