@@ -19,7 +19,7 @@ pub async fn init_db() -> Result<(), anyhow::Error> {
 
     if DB_POOL.get().is_none() {
         let pool = Pool::<Sqlite>::connect(DB_FILE).await?;
-         DB_POOL.set(pool).map_err(|e| anyhow::anyhow!("set pool fail".to_string()))?;
+         DB_POOL.set(pool).map_err(|_| anyhow::anyhow!("set pool fail".to_string()))?;
          if let Some(init_pool) = DB_POOL.get() {
             sqlx::query("CREATE TABLE if not exists hdfs_config (id INTEGER PRIMARY KEY   AUTOINCREMENT, name TEXT, hdfs_url TEXT,hdfs_config TEXT, del_flag INTEGER)")
         .execute(init_pool).await.map_err(|e| anyhow::anyhow!(e.to_string()))?;

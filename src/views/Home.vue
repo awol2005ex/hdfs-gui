@@ -13,7 +13,7 @@
              <tr>
                <td>{{ item.name }}</td>
                <td><el-button type="primary" :icon="EditPen" circle  @click="editHdfsConfig(item.id||0)"  title="Edit"/></td>
-               <td><el-button type="failure" :icon="Delete" circle  @click="deleteHdfsConfig(item.id||0)" title="Delete"/></td>
+               <td><el-button type="danger" :icon="Delete" circle  @click="deleteHdfsConfig(item.id||0)" title="Delete"/></td>
                <td><el-button type="primary" :icon="Connection" circle  @click="connectToHdfs(item.id||0)"  title="Connect"/></td>
                
                
@@ -52,6 +52,9 @@ import { reactive, Ref, ref } from "vue";
 import { HdfsConfig, getHdfsConfigList,saveHdfsConfig } from "../api/hdfs_config.ts";
 import HdfsConfigForm from "../components/HdfsConfigForm.vue";
 import { DocumentAdd, EditPen, Delete,Connection } from "@element-plus/icons-vue";
+import { useRouter, useRoute } from 'vue-router'
+const router = useRouter()
+const route = useRoute()
 
 //HDFS配置列表
 const hdfsConfigList: Ref<Array<HdfsConfig>> = ref([]);
@@ -88,6 +91,8 @@ const getHdfsConfig = (id:number) => {
 }
 const connectToHdfs = (id:number) => {
   console.log(id)
+  
+  router.push('/HdfsFolderView/'+id)
 }
 </script>
 
