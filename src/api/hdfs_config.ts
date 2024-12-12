@@ -25,3 +25,7 @@ export const getHdfsConfig = async (id:number) => {
   const result: HdfsConfig = await invoke("get_hdfs_config", {id:id});
   return result;
 };
+//删除HDFS连接配置
+export const deleteHdfsConfig = async (id:number) => {
+   await invoke("delete_hdfs_config", {id:id});
+};

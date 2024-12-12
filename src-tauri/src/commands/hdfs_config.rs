@@ -62,6 +62,28 @@ pub async fn save_hdfs_config(hdfs_config: HdfsConfig) -> anyhow_tauri::TAResult
     Ok(())
 }
 
+
+#[tauri::command]
+pub async fn delete_hdfs_config(id: i64) -> anyhow_tauri::TAResult<()> {
+    crate::db::db_init::init_db()
+        .await
+        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+
+    if let Some(pool) = DB_POOL.get() {
+       
+            sqlx::query(
+                "update hdfs_config set del_flag=1 where id = ?",
+            )
+            .bind(id)
+            .execute(pool)
+            .await
+            .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    } else {
+        return Err(anyhow::anyhow!("Database connection pool is not initialized").into());
+    }
+    Ok(())
+}
+
 //获取单个hdfs配置
 pub async fn get_one_hdfs_config(id: i64) -> Result<HdfsConfig, anyhow::Error> {
     if let Some(pool) = DB_POOL.get() {
