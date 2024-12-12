@@ -4,10 +4,18 @@
       <el-header>
         <el-button
           type="primary"
-          :icon="Back"
+          :icon="HomeFilled"
           circle
           @click="backToHome"
           title="Back To Home"
+          style="float: left"
+        />
+        <el-button
+          type="primary"
+          :icon="Back"
+          circle
+          @click="backToLastPage"
+          title="Back To Last Page"
           style="float: left"
         />
         <el-button
@@ -134,7 +142,7 @@
 <script setup lang="ts">
 import { reactive, Ref, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { Back, Refresh, Folder, Document } from "@element-plus/icons-vue";
+import { Back, Refresh, Folder, Document,HomeFilled } from "@element-plus/icons-vue";
 import { getHdfsFileList, HdfsFile } from "../api/hdfs_file.ts";
 import { ElMessage } from "element-plus";
 const router = useRouter();
@@ -146,6 +154,11 @@ const route = useRoute();
 const backToHome = () => {
   router.push("/");
 };
+const backToLastPage = () => {
+  router.go(-1);
+};
+
+
 
 const current_parent_path = ref(
   route.query.path ? (route.query.path as string) : "/"
