@@ -20,6 +20,8 @@ pub fn run() {
             commands::hdfs_config::delete_hdfs_config,
             //上传文件到hdfs
             commands::hdfs_file::upload_hdfs_file,
+            //删除hdfs文件
+            commands::hdfs_file::delete_hdfs_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -30,6 +30,15 @@
                 title="Upload File To Hdfs"
                 style="float: right; margin-left: 10px"
               />
+              <el-button
+                type="warning"
+                :icon="Delete"
+                circle
+                @click="deleteFiles"
+                title="Delete Files in Hdfs"
+                style="float: right; margin-left: 10px"
+              />
+
             </td>
           </tr>
           <tr>
@@ -200,9 +209,10 @@ import {
   HomeFilled,
   Search,
   Location,
-  Upload
+  Upload,
+  Delete
 } from "@element-plus/icons-vue";
-import { getHdfsFileList, HdfsFile ,uploadHdfsFile } from "../api/hdfs_file.ts";
+import { getHdfsFileList, HdfsFile ,uploadHdfsFile,deleteHdfsFiles } from "../api/hdfs_file.ts";
 import { ElMessage, ElMessageBox,ElLoading  } from "element-plus";
 //选择文件
 import { open } from '@tauri-apps/plugin-dialog';
@@ -422,6 +432,51 @@ const uploadFileToHdfs =async () => {
       });
       loadingInstance1.close()
     }
+  }
+}
+
+//删除文件
+const deleteFiles = async () => {
+  console.log(multipleSelection.value.map((item) => item.path).join(","))
+  const s=await ElMessageBox.confirm(
+    'Delete files '+multipleSelection.value.map((item) => item.path).join(",")+' . Continue?',
+    'Warning',
+    {
+      confirmButtonText: 'OK',
+      cancelButtonText: 'Cancel',
+      type: 'warning',
+      draggable: true,
+    }
+  )
+  if(s!="confirm"){
+     return  
+  }
+  const loadingInstance1 = ElLoading.service({ fullscreen: true })
+  try{
+    const result =await deleteHdfsFiles(parseInt(route.params.id as string),  multipleSelection.value.map((item) => item.path))
+    if(result){
+      ElMessage({
+        showClose: true,
+        message: "删除成功",
+        type: "success",
+      });
+      refreshData()
+      loadingInstance1.close()
+    }else{
+      ElMessage({
+        showClose: true,
+        message: "删除失败",
+        type: "error",
+      });
+      loadingInstance1.close()
+    }
+  }catch(err:any){
+    ElMessage({
+      showClose: true,
+      message: err.toString(),
+      type: "error",
+    });
+    loadingInstance1.close()
   }
 }
 </script>

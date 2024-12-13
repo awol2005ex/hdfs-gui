@@ -33,3 +33,11 @@ export const uploadHdfsFile = async (id: number, parent_path: string ,local_file
   });
   return result;
 };
+//删除文件
+export const deleteHdfsFiles = async (id: number, file_path_list: Array<string>) => {
+  const result: Boolean = await invoke("delete_hdfs_files", {
+    id: id,
+    filePathList: file_path_list,
+  });
+  return result;
+};

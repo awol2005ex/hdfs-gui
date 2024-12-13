@@ -124,3 +124,20 @@ pub async fn upload_hdfs_file(
 
     Ok(true)
 }
+
+
+//上传文件
+#[tauri::command]
+pub async fn delete_hdfs_files(
+    id: i64,
+    file_path_list: Vec<String>,
+) -> anyhow_tauri::TAResult<bool> {
+    let client = get_hdfs_client(id).await?;
+    for file_path in file_path_list {
+        client
+            .delete(&file_path, true)
+            .await
+            .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    }
+    Ok(true)
+}
