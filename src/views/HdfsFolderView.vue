@@ -7,7 +7,7 @@
             <td>
               <el-input
                 v-model="search_words"
-                style="width: 240px; float: left; padding-left: 10px"
+                style="width: 240px; float: left;"
                 placeholder="Search File"
                 :prefix-icon="Search"
                 @change="on_search_words_change"
@@ -19,7 +19,7 @@
                 circle
                 @click="goToLocation"
                 title="Go To Input Path"
-                style="float: left; padding-left: 10px"
+                style="float: left; margin-left: 10px"
               />
             </td>
           </tr>
@@ -88,7 +88,9 @@
           :data="fileListPageData"
           style="width: 100%"
           @sort-change="sortChange"
+            @selection-change="handleSelectionChange"
         >
+          <el-table-column type="selection"  width="55" />
           <el-table-column prop="isdir" label="" width="60">
             <template #default="scope">
               <el-icon v-if="scope.row.isdir" :size="20">
@@ -351,7 +353,7 @@ const sortChange = (row: { column: any; prop: any; order: any }) => {
   sortOrder.value = order;
   filert_by_search_words();
 };
-
+//跳转地址
 const goToLocation = async () => {
   const newLocation = await ElMessageBox.prompt("Please input Path", "Tip", {
     confirmButtonText: "OK",
@@ -366,6 +368,12 @@ const goToLocation = async () => {
     });
   }
 };
+//多选文件
+const multipleSelection = ref<HdfsFile[]>([])
+const handleSelectionChange = (val: HdfsFile[]) => {
+  multipleSelection.value = val;
+};
+
 </script>
 
 <style scoped></style>
