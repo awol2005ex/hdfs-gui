@@ -1596,6 +1596,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "anyhow-tauri",
+ "bytes",
  "chrono",
  "hdfs-native",
  "once_cell",

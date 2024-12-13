@@ -22,3 +22,14 @@ export const getHdfsFileList = async (id: number, parent_path: string) => {
   });
   return result;
 };
+
+
+//上传文件
+export const uploadHdfsFile = async (id: number, parent_path: string ,local_file_path: string) => {
+  const result: Boolean = await invoke("upload_hdfs_file", {
+    id: id,
+    parentPath: parent_path,
+    localFilePath: local_file_path,
+  });
+  return result;
+};

@@ -21,6 +21,15 @@
                 title="Go To Input Path"
                 style="float: left; margin-left: 10px"
               />
+
+              <el-button
+                type="primary"
+                :icon="Upload"
+                circle
+                @click="uploadFileToHdfs"
+                title="Upload File To Hdfs"
+                style="float: right; margin-left: 10px"
+              />
             </td>
           </tr>
           <tr>
@@ -191,9 +200,14 @@ import {
   HomeFilled,
   Search,
   Location,
+  Upload
 } from "@element-plus/icons-vue";
-import { getHdfsFileList, HdfsFile } from "../api/hdfs_file.ts";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { getHdfsFileList, HdfsFile ,uploadHdfsFile } from "../api/hdfs_file.ts";
+import { ElMessage, ElMessageBox,ElLoading  } from "element-plus";
+//选择文件
+import { open } from '@tauri-apps/plugin-dialog';
+
+
 const router = useRouter();
 const route = useRoute();
 
@@ -203,14 +217,15 @@ const route = useRoute();
 const backToHome = () => {
   router.push("/");
 };
+//返回历史上一页
 const backToLastPage = () => {
   router.go(-1);
 };
-
+//当前路径
 const current_parent_path = ref(
   route.query.path ? (route.query.path as string) : "/"
 );
-
+//当前路径分解点击
 const get_file_path_separator = (path: string) => {
   if (path == "/") {
     return [{ path: "/", name: "/" }];
@@ -228,7 +243,7 @@ const get_file_path_separator = (path: string) => {
 const current_parent_paths = ref(
   get_file_path_separator(route.query.path ? (route.query.path as string) : "/")
 );
-
+//搜索过滤排序
 const fileListData = ref<HdfsFile[]>([]);
 
 const fileListPageData = ref<HdfsFile[]>([]);
@@ -373,7 +388,42 @@ const multipleSelection = ref<HdfsFile[]>([])
 const handleSelectionChange = (val: HdfsFile[]) => {
   multipleSelection.value = val;
 };
-
+//上传文件
+const uploadFileToHdfs =async () => {
+  const selected = await open({
+    multiple: false,
+    directory: false
+  })
+  if (selected) {
+    const loadingInstance1 = ElLoading.service({ fullscreen: true })
+    try{
+      const result =await uploadHdfsFile(parseInt(route.params.id as string), current_parent_path.value,selected)
+      if(result){
+        ElMessage({
+          showClose: true,
+          message: "上传成功",
+          type: "success",
+        });
+        refreshData()
+        loadingInstance1.close()
+      }else{
+        ElMessage({
+          showClose: true,
+          message: "上传失败",
+          type: "error",
+        });
+        loadingInstance1.close()
+      }
+    }catch(err:any){
+      ElMessage({
+        showClose: true,
+        message: err.toString(),
+        type: "error",
+      });
+      loadingInstance1.close()
+    }
+  }
+}
 </script>
 
 <style scoped></style>
