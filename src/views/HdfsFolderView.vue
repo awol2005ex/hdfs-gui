@@ -2,66 +2,86 @@
   <div class="common-layout">
     <el-container>
       <el-header>
-        <el-button
-          type="primary"
-          :icon="HomeFilled"
-          circle
-          @click="backToHome"
-          title="Back To Home"
-          style="float: left"
-        />
-        <el-button
-          type="primary"
-          :icon="Back"
-          circle
-          @click="backToLastPage"
-          title="Back To Last Page"
-          style="float: left"
-        />
-        <el-button
-          type="primary"
-          :icon="Refresh"
-          circle
-          @click="refreshData"
-          title="Refresh"
-          style="float: left"
-        />
+        <table width="100%">
+          <tr>
+            <td>
+              <el-input
+                v-model="search_words"
+                style="width: 240px; float: left; padding-left: 10px"
+                placeholder="Search File"
+                :prefix-icon="Search"
+                @change="on_search_words_change"
+                clearable
+              />
+              <el-button
+                type="primary"
+                :icon="Location"
+                circle
+                @click="goToLocation"
+                title="Go To Input Path"
+                style="float: left; padding-left: 10px"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <el-button
+                type="primary"
+                :icon="HomeFilled"
+                circle
+                @click="backToHome"
+                title="Back To Home"
+                style="float: left"
+              />
+              <el-button
+                type="primary"
+                :icon="Back"
+                circle
+                @click="backToLastPage"
+                title="Back To Last Page"
+                style="float: left"
+              />
+              <el-button
+                type="primary"
+                :icon="Refresh"
+                circle
+                @click="refreshData"
+                title="Refresh"
+                style="float: left"
+              />
 
-        <el-breadcrumb separator="/" style="float: left; padding-left: 10px">
-          <el-breadcrumb-item
-            v-if="current_parent_paths.length <= 1"
-            :to="{ path: '/' }"
-            >/</el-breadcrumb-item
-          >
-          <el-breadcrumb-item
-            v-if="current_parent_paths.length > 1"
-            :to="{
-              path: '/HdfsFolderView/' + route.params.id,
-              query: { path: '/' },
-            }"
-            >Root</el-breadcrumb-item
-          >
-          <template v-if="current_parent_paths.length > 1">
-            <template v-for="item in current_parent_paths">
-              <el-breadcrumb-item
-                :to="{
-                  path: '/HdfsFolderView/' + route.params.id,
-                  query: { path: item.path },
-                }"
-                >{{ item.name }}</el-breadcrumb-item
+              <el-breadcrumb
+                separator="/"
+                style="float: left; padding-left: 10px"
               >
-            </template>
-          </template>
-        </el-breadcrumb>
-
-        <el-input
-          v-model="search_words"
-          style="width: 240px; float: left; padding-left: 10px"
-          placeholder="Search File"
-          :prefix-icon="Search"
-          @change="on_search_words_change"
-          clearable
-        />
+                <el-breadcrumb-item
+                  v-if="current_parent_paths.length <= 1"
+                  :to="{ path: '/' }"
+                  >/</el-breadcrumb-item
+                >
+                <el-breadcrumb-item
+                  v-if="current_parent_paths.length > 1"
+                  :to="{
+                    path: '/HdfsFolderView/' + route.params.id,
+                    query: { path: '/' },
+                  }"
+                  >Root</el-breadcrumb-item
+                >
+                <template v-if="current_parent_paths.length > 1">
+                  <template v-for="item in current_parent_paths">
+                    <el-breadcrumb-item
+                      :to="{
+                        path: '/HdfsFolderView/' + route.params.id,
+                        query: { path: item.path },
+                      }"
+                      >{{ item.name }}</el-breadcrumb-item
+                    >
+                  </template>
+                </template>
+              </el-breadcrumb>
+            </td>
+          </tr>
+        </table>
       </el-header>
       <el-main>
         <el-table
@@ -168,9 +188,10 @@ import {
   Document,
   HomeFilled,
   Search,
+  Location,
 } from "@element-plus/icons-vue";
 import { getHdfsFileList, HdfsFile } from "../api/hdfs_file.ts";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 const router = useRouter();
 const route = useRoute();
 
@@ -325,14 +346,25 @@ const sortOrder = ref("");
 //排序
 const sortChange = (row: { column: any; prop: any; order: any }) => {
   const { column, prop, order } = row;
-  console.log(column, prop, order);
-  console.log("column", column);
-  console.log("prop", prop);
-  console.log("order", order);
 
   sortProp.value = prop;
   sortOrder.value = order;
   filert_by_search_words();
+};
+
+const goToLocation = async () => {
+  const newLocation = await ElMessageBox.prompt("Please input Path", "Tip", {
+    confirmButtonText: "OK",
+    cancelButtonText: "Cancel",
+  });
+  if (newLocation.action == "confirm") {
+    router.push({
+      path: "/HdfsFolderView/" + route.params.id,
+      query: {
+        path: newLocation.value,
+      },
+    });
+  }
 };
 </script>
 
