@@ -50,3 +50,12 @@ export const createHdfsFolder = async (id: number, parent_path: string, folder_n
   });
   return result;
 }
+
+//查看文件预览内容
+export const get_file_preview_content = async (id: number, file_path : string) => {
+  const result: string = await invoke("get_hdfs_file_content_preview", {
+    id: id,
+    filePath: file_path,
+  });
+  return result;
+}

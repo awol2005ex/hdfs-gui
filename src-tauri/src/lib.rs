@@ -24,6 +24,8 @@ pub fn run() {
             commands::hdfs_file::delete_hdfs_files,
             //新建目录
             commands::hdfs_file::create_hdfs_dir,
+            //获取预览内存
+            commands::hdfs_file::get_hdfs_file_content_preview,
             
         ])
         .run(tauri::generate_context!())

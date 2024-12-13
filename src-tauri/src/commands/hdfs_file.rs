@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow;
+use bytes::Bytes;
 use hdfs_native::client::FileStatus;
 use hdfs_native::WriteOptions;
 use serde::{Deserialize, Serialize};
@@ -155,4 +156,23 @@ pub async fn create_hdfs_dir(
         .await
         .map_err(|e| anyhow::anyhow!(e.to_string()))?;
     Ok(true)
+}
+
+//获取文件预览二进制内容
+#[tauri::command]
+pub async fn get_hdfs_file_content_preview(
+    id: i64,
+    file_path: String,
+) -> anyhow_tauri::TAResult<String> {
+    let client = get_hdfs_client(id).await?;
+    let mut hdfs_file_reader = client
+        .read(&file_path)
+        .await
+        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+
+    let buf:Bytes=hdfs_file_reader
+        .read(1*1024*1024)
+        .await
+        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    Ok(buf.to_vec().into_iter().map(|x| x as char).collect())
 }

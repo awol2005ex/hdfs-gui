@@ -325,9 +325,9 @@ const refreshData = () => {
       backToLastPage();
     });
 };
-
+//刷新数据
 refreshData();
-
+//显示文件大小
 const formatFileSize = (size: number) => {
   if (size < 1024) {
     return size + " B";
@@ -340,7 +340,14 @@ const formatFileSize = (size: number) => {
   }
 };
 //打开文件
-const goToFile = (row: HdfsFile) => {};
+const goToFile = (row: HdfsFile) => {
+  router.push({
+    path: "/HdfsFileView/" + route.params.id,
+    query: {
+      path: row.path,
+    },
+  });
+};
 //打开目录
 const goToFolder = (row: HdfsFile) => {
   router.push({
@@ -489,7 +496,7 @@ const deleteFiles = async () => {
     loadingInstance1.close()
   }
 }
-
+//创建目录
 const NewFolder = async () => {
   const folderName = await ElMessageBox.prompt('Please input folder name', 'Prompt', {
     confirmButtonText: 'OK',
