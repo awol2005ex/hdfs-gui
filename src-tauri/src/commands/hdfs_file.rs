@@ -126,7 +126,7 @@ pub async fn upload_hdfs_file(
 }
 
 
-//上传文件
+//删除文件
 #[tauri::command]
 pub async fn delete_hdfs_files(
     id: i64,
@@ -139,5 +139,20 @@ pub async fn delete_hdfs_files(
             .await
             .map_err(|e| anyhow::anyhow!(e.to_string()))?;
     }
+    Ok(true)
+}
+
+//新建目录
+#[tauri::command]
+pub async fn create_hdfs_dir(
+    id: i64,
+    parent_path: String,
+    dir_name: String,
+) -> anyhow_tauri::TAResult<bool> {
+    let client = get_hdfs_client(id).await?;
+    client
+        .mkdirs(&format!("{}/{}", &parent_path, &dir_name),509, false)
+        .await
+        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
     Ok(true)
 }

@@ -5,13 +5,44 @@
         <table width="100%">
           <tr>
             <td>
+              <el-button-group style="float: left">
+              <el-button
+                type="primary"
+                :icon="HomeFilled"
+                circle
+                @click="backToHome"
+                title="Back To Home"
+              />
+              <el-button
+                type="primary"
+                :icon="Back"
+                circle
+                @click="backToLastPage"
+                title="Back To Last Page"
+              />
+              <el-button
+                type="primary"
+                :icon="Refresh"
+                circle
+                @click="refreshData"
+                title="Refresh"
+              /></el-button-group>
               <el-input
                 v-model="search_words"
-                style="width: 240px; float: left;"
+                style="width: 240px; float: left;margin-left: 10px"
                 placeholder="Search File"
                 :prefix-icon="Search"
                 @change="on_search_words_change"
                 clearable
+              />
+
+              <el-button-group style="float: right">
+                <el-button
+                type="primary"
+                :icon="FolderAdd"
+                circle
+                @click="NewFolder"
+                title="Create New Folder"
               />
               <el-button
                 type="primary"
@@ -19,7 +50,6 @@
                 circle
                 @click="goToLocation"
                 title="Go To Input Path"
-                style="float: left; margin-left: 10px"
               />
 
               <el-button
@@ -28,7 +58,6 @@
                 circle
                 @click="uploadFileToHdfs"
                 title="Upload File To Hdfs"
-                style="float: right; margin-left: 10px"
               />
               <el-button
                 type="warning"
@@ -36,37 +65,13 @@
                 circle
                 @click="deleteFiles"
                 title="Delete Files in Hdfs"
-                style="float: right; margin-left: 10px"
               />
-
+            </el-button-group>
             </td>
           </tr>
           <tr>
             <td>
-              <el-button
-                type="primary"
-                :icon="HomeFilled"
-                circle
-                @click="backToHome"
-                title="Back To Home"
-                style="float: left"
-              />
-              <el-button
-                type="primary"
-                :icon="Back"
-                circle
-                @click="backToLastPage"
-                title="Back To Last Page"
-                style="float: left"
-              />
-              <el-button
-                type="primary"
-                :icon="Refresh"
-                circle
-                @click="refreshData"
-                title="Refresh"
-                style="float: left"
-              />
+              
 
               <el-breadcrumb
                 separator="/"
@@ -210,9 +215,10 @@ import {
   Search,
   Location,
   Upload,
-  Delete
+  Delete,
+  FolderAdd
 } from "@element-plus/icons-vue";
-import { getHdfsFileList, HdfsFile ,uploadHdfsFile,deleteHdfsFiles } from "../api/hdfs_file.ts";
+import { getHdfsFileList, HdfsFile ,uploadHdfsFile,deleteHdfsFiles,createHdfsFolder } from "../api/hdfs_file.ts";
 import { ElMessage, ElMessageBox,ElLoading  } from "element-plus";
 //选择文件
 import { open } from '@tauri-apps/plugin-dialog';
@@ -297,8 +303,9 @@ const filert_by_search_words = () => {
   total.value = filterData.length;
   return;
 };
-
+//刷新表格
 const refreshData = () => {
+  const loadingInstance1 = ElLoading.service({ fullscreen: true })
   getHdfsFileList(
     parseInt(route.params.id as string),
     current_parent_path.value
@@ -306,6 +313,7 @@ const refreshData = () => {
     .then((res) => {
       fileListData.value = res;
       filert_by_search_words();
+      loadingInstance1.close()
     })
     .catch((err) => {
       ElMessage({
@@ -313,6 +321,8 @@ const refreshData = () => {
         message: err.toString(),
         type: "error",
       });
+      loadingInstance1.close()
+      backToLastPage();
     });
 };
 
@@ -479,6 +489,45 @@ const deleteFiles = async () => {
     loadingInstance1.close()
   }
 }
+
+const NewFolder = async () => {
+  const folderName = await ElMessageBox.prompt('Please input folder name', 'Prompt', {
+    confirmButtonText: 'OK',
+    cancelButtonText: 'Cancel',
+    inputPattern: /^[a-zA-Z0-9_-]{1,64}$/,
+    inputErrorMessage: 'Name is invalid',
+  })
+  if(folderName.action=="confirm" && folderName.value){
+    const loadingInstance1 = ElLoading.service({ fullscreen: true })
+    try{
+      const result =await createHdfsFolder(parseInt(route.params.id as string), current_parent_path.value, folderName.value)
+      if(result){
+        ElMessage({
+          showClose: true,
+          message: "Created successfully",
+          type: "success",
+        });
+        refreshData()
+        loadingInstance1.close()
+      }else{
+        ElMessage({
+          showClose: true,
+          message: "Create failed",
+          type: "error",
+        });
+        loadingInstance1.close()
+      }
+    }catch(err:any){
+      ElMessage({
+        showClose: true,
+        message: err.toString(),
+        type: "error",
+      });
+      loadingInstance1.close()
+    }
+  }
+}
+
 </script>
 
 <style scoped></style>

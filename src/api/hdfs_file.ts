@@ -41,3 +41,12 @@ export const deleteHdfsFiles = async (id: number, file_path_list: Array<string>)
   });
   return result;
 };
+//创建目录
+export const createHdfsFolder = async (id: number, parent_path: string, folder_name: string) => {
+  const result: Boolean = await invoke("create_hdfs_dir", {
+    id: id,
+    parentPath: parent_path,
+    dirName: folder_name,
+  });
+  return result;
+}

@@ -22,6 +22,9 @@ pub fn run() {
             commands::hdfs_file::upload_hdfs_file,
             //删除hdfs文件
             commands::hdfs_file::delete_hdfs_files,
+            //新建目录
+            commands::hdfs_file::create_hdfs_dir,
+            
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
