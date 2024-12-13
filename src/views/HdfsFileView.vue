@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, Ref, ref, watch } from "vue";
+import { ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
   Back,
@@ -83,7 +83,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 
 
 import { get_file_preview_content } from "../api/hdfs_file.ts";
-import {ElMessage, ElMessageBox, ElLoading  } from "element-plus";
+import {ElMessage  } from "element-plus";
 
 interface Props {
   codeStyle?: CSSProperties; // 代码样式
@@ -136,10 +136,6 @@ const backToLastPage = () => {
   router.go(-1);
 };
 
-//当前路径
-const current_parent_path = ref(
-  route.query.path ? (route.query.path as string) : "/"
-);
 //当前路径分解点击
 const get_file_path_separator = (path: string) => {
   if (path == "/") {

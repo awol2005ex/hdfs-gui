@@ -25,8 +25,8 @@
 </template>
 
 <script setup lang="ts">
-import { Reactive, reactive, Ref, ref ,defineExpose } from "vue";
-import { HdfsConfig, getHdfsConfigList } from "../api/hdfs_config.ts";
+import { Reactive, reactive, defineExpose } from "vue";
+import { HdfsConfig } from "../api/hdfs_config.ts";
 
 const hdfsConfigForm :Reactive<HdfsConfig> = reactive({ 
   id: 0,  

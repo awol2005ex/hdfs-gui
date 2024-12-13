@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, Ref, ref, nextTick } from "vue";
+import {  Ref, ref, nextTick } from "vue";
 import {
   HdfsConfig,
   getHdfsConfigList,
@@ -90,10 +90,9 @@ import {
   Delete,
   Connection,
 } from "@element-plus/icons-vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 const router = useRouter();
-const route = useRoute();
 
 //HDFS配置列表
 const hdfsConfigList: Ref<Array<HdfsConfig>> = ref([]);
@@ -126,7 +125,7 @@ const hdfsConfigForm = ref<InstanceType<typeof HdfsConfigForm>>();
 //保存
 const AddHdfsConfigConfirm = () => {
   saveHdfsConfig(hdfsConfigForm.value?.hdfsConfigForm || {})
-    .then((res) => {
+    .then(() => {
       AddHdfsConfigDialogVisible.value = false;
       refreshList();
     })
@@ -159,7 +158,7 @@ const editHdfsConfig = async (id: number) => {
 //删除HDFS配置
 const removeHdfsConfig = (id: number) => {
   deleteHdfsConfig(id)
-    .then((res) => {
+    .then(() => {
       refreshList();
     })
     .catch((err) => {

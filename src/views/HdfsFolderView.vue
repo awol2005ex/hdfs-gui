@@ -204,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, Ref, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
   Back,
@@ -389,7 +389,7 @@ const sortProp = ref("");
 const sortOrder = ref("");
 //排序
 const sortChange = (row: { column: any; prop: any; order: any }) => {
-  const { column, prop, order } = row;
+  const {  prop, order } = row;
 
   sortProp.value = prop;
   sortOrder.value = order;
