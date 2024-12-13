@@ -55,16 +55,20 @@
         </el-breadcrumb>
 
         <el-input
-      v-model="search_words"
-      style="width: 240px;float: left; padding-left: 10px;"
-      placeholder="Search File"
-      :prefix-icon="Search"
-      @change="on_search_words_change"
-      clearable
-    />
+          v-model="search_words"
+          style="width: 240px; float: left; padding-left: 10px"
+          placeholder="Search File"
+          :prefix-icon="Search"
+          @change="on_search_words_change"
+          clearable
+        />
       </el-header>
       <el-main>
-        <el-table :data="fileListPageData" style="width: 100%">
+        <el-table
+          :data="fileListPageData"
+          style="width: 100%"
+          @sort-change="sortChange"
+        >
           <el-table-column prop="isdir" label="" width="60">
             <template #default="scope">
               <el-icon v-if="scope.row.isdir" :size="20">
@@ -81,6 +85,7 @@
             label="Name"
             width="400"
             show-overflow-tooltip
+            sortable="custom"
           >
             <template #default="scope">
               <el-link
@@ -99,6 +104,7 @@
             label="Size"
             width="120"
             show-overflow-tooltip
+            sortable="custom"
           >
             <template #default="scope">
               {{ scope.row.isdir ? "" : formatFileSize(scope.row.length) }}
@@ -109,24 +115,28 @@
             label="Owner"
             width="120"
             show-overflow-tooltip
+            sortable="custom"
           />
           <el-table-column
             prop="group"
             label="Group"
             width="120"
             show-overflow-tooltip
+            sortable="custom"
           />
           <el-table-column
             prop="permission"
             label="Permission"
             width="120"
             show-overflow-tooltip
+            sortable="custom"
           />
           <el-table-column
             prop="modification_time"
             label="Time"
             width="180"
             show-overflow-tooltip
+            sortable="custom"
           >
             <template #default="scope">
               {{ new Date(scope.row.modification_time).toLocaleString() }}
@@ -151,7 +161,14 @@
 <script setup lang="ts">
 import { reactive, Ref, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { Back, Refresh, Folder, Document,HomeFilled,Search } from "@element-plus/icons-vue";
+import {
+  Back,
+  Refresh,
+  Folder,
+  Document,
+  HomeFilled,
+  Search,
+} from "@element-plus/icons-vue";
 import { getHdfsFileList, HdfsFile } from "../api/hdfs_file.ts";
 import { ElMessage } from "element-plus";
 const router = useRouter();
@@ -166,8 +183,6 @@ const backToHome = () => {
 const backToLastPage = () => {
   router.go(-1);
 };
-
-
 
 const current_parent_path = ref(
   route.query.path ? (route.query.path as string) : "/"
@@ -197,23 +212,43 @@ const fileListPageData = ref<HdfsFile[]>([]);
 
 const filert_by_search_words = () => {
   if (search_words.value == "") {
-    fileListPageData.value = fileListData.value.slice(
-      (currentPage.value - 1) * pageSize.value,
-      currentPage.value * pageSize.value
-    );
-    total.value = (fileListData.value||[]).length;
+    fileListPageData.value = fileListData.value
+      //排序
+      .sort((a: HdfsFile, b: HdfsFile) => {
+        if (a[sortProp.value.toString()] < b[sortProp.value.toString()])
+          return sortOrder.value == "descending" ? -1 : 1;
+        if (a[sortProp.value.toString()] > b[sortProp.value.toString()])
+          return sortOrder.value == "descending" ? 1 : -1;
+        return 0;
+      })
+      //分页
+      .slice(
+        (currentPage.value - 1) * pageSize.value,
+        currentPage.value * pageSize.value
+      );
+    total.value = (fileListData.value || []).length;
     return;
   }
-  const filterData= fileListData.value.filter((item) => {
-    return (item.name||"").includes(search_words.value);
+  const filterData = fileListData.value.filter((item) => {
+    return (item.name || "").includes(search_words.value);
   });
-  fileListPageData.value = filterData.slice(
+  fileListPageData.value = filterData
+    //排序
+    .sort((a: HdfsFile, b: HdfsFile) => {
+      if (a[sortProp.value.toString()] < b[sortProp.value.toString()])
+        return sortOrder.value == "descending" ? -1 : 1;
+      if (a[sortProp.value.toString()] > b[sortProp.value.toString()])
+        return sortOrder.value == "descending" ? 1 : -1;
+      return 0;
+    })
+    //分页
+    .slice(
       (currentPage.value - 1) * pageSize.value,
       currentPage.value * pageSize.value
     );
-    total.value = filterData.length;
-    return;
-}
+  total.value = filterData.length;
+  return;
+};
 
 const refreshData = () => {
   getHdfsFileList(
@@ -266,7 +301,6 @@ watch(route, (newRoute) => {
   refreshData();
 });
 
-
 //分页
 const pageSize = ref(10);
 const total = ref(0);
@@ -282,9 +316,24 @@ const handleSizeChange = async (val: number) => {
 
 const on_search_words_change = () => {
   filert_by_search_words();
-}
+};
 //搜索框
-const search_words= ref("");
+const search_words = ref("");
+
+const sortProp = ref("");
+const sortOrder = ref("");
+//排序
+const sortChange = (row: { column: any; prop: any; order: any }) => {
+  const { column, prop, order } = row;
+  console.log(column, prop, order);
+  console.log("column", column);
+  console.log("prop", prop);
+  console.log("order", order);
+
+  sortProp.value = prop;
+  sortOrder.value = order;
+  filert_by_search_words();
+};
 </script>
 
 <style scoped></style>

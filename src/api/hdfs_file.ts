@@ -1,16 +1,17 @@
 import { invoke } from "@tauri-apps/api/core";
 
 export interface HdfsFile {
-  name?: string;
-  path?: string;
-  parent_path?: string;
-  owner: String;
+  name: string;
+  path: string;
+  parent_path: string;
+  owner: string;
   isdir: Boolean;
   group: string;
   permission: number;
   modification_time: number;
   access_time: number;
   length: number;
+  [key: string]: string|number|Boolean;
 }
 
 //获取HDFS文件列表
