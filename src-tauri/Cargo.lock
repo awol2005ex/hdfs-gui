@@ -92,16 +92,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1fd03a028ef38ba2276dce7e33fcd6369c158a1bca17946c4b1b701891c1ff7"
 
 [[package]]
-name = "anyhow-tauri"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b911500b8bce90dd5671a68fe4313f2c8614b9a80c8454d8d00f8721988657f9"
-dependencies = [
- "anyhow",
- "serde",
-]
-
-[[package]]
 name = "ashpd"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1595,7 +1585,6 @@ name = "hdfs-gui"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "anyhow-tauri",
  "bytes",
  "chrono",
  "hdfs-native",

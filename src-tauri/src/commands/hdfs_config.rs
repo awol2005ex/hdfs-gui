@@ -14,10 +14,10 @@ pub struct HdfsConfig {
 }
 //获取hdfs配置列表
 #[tauri::command]
-pub async fn get_hdfs_config_list() -> anyhow_tauri::TAResult<Vec<HdfsConfig>> {
+pub async fn get_hdfs_config_list() -> Result<Vec<HdfsConfig>, String> {
     crate::db::db_init::init_db()
         .await
-        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+        .map_err(|e| e.to_string())?;
 
     if let Some(pool) = DB_POOL.get() {
         let hdfs_config_list: Vec<HdfsConfig> =
@@ -32,10 +32,10 @@ pub async fn get_hdfs_config_list() -> anyhow_tauri::TAResult<Vec<HdfsConfig>> {
 
 //保存hdfs配置
 #[tauri::command]
-pub async fn save_hdfs_config(hdfs_config: HdfsConfig) -> anyhow_tauri::TAResult<()> {
+pub async fn save_hdfs_config(hdfs_config: HdfsConfig) -> Result<(), String> {
     crate::db::db_init::init_db()
         .await
-        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+        .map_err(|e| e.to_string())?;
 
     if let Some(pool) = DB_POOL.get() {
         if hdfs_config.id > 0 {
@@ -48,26 +48,26 @@ pub async fn save_hdfs_config(hdfs_config: HdfsConfig) -> anyhow_tauri::TAResult
             .bind(hdfs_config.id)
             .execute(pool)
             .await
-            .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+            .map_err(|e| e.to_string())?;
         } else {
             sqlx::query("insert into hdfs_config (name, hdfs_config, hdfs_url,del_flag) values (?, ?, ? ,0)")
         .bind(hdfs_config.name)
         .bind(hdfs_config.hdfs_config)
         .bind(hdfs_config.hdfs_url)
-        .execute(pool).await.map_err(|e| anyhow::anyhow!(e.to_string()))?;
+        .execute(pool).await.map_err(|e| e.to_string())?;
         }
     } else {
-        return Err(anyhow::anyhow!("Database connection pool is not initialized").into());
+        return Err("Database connection pool is not initialized".to_owned());
     }
     Ok(())
 }
 
 
 #[tauri::command]
-pub async fn delete_hdfs_config(id: i64) -> anyhow_tauri::TAResult<()> {
+pub async fn delete_hdfs_config(id: i64) -> Result<(), String> {
     crate::db::db_init::init_db()
         .await
-        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+        .map_err(|e| e.to_string())?;
 
     if let Some(pool) = DB_POOL.get() {
        
@@ -77,15 +77,15 @@ pub async fn delete_hdfs_config(id: i64) -> anyhow_tauri::TAResult<()> {
             .bind(id)
             .execute(pool)
             .await
-            .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+            .map_err(|e| e.to_string())?;
     } else {
-        return Err(anyhow::anyhow!("Database connection pool is not initialized").into());
+        return Err("Database connection pool is not initialized".to_owned());
     }
     Ok(())
 }
 
 //获取单个hdfs配置
-pub async fn get_one_hdfs_config(id: i64) -> Result<HdfsConfig, anyhow::Error> {
+pub async fn get_one_hdfs_config(id: i64) ->  Result<HdfsConfig, String> {
     if let Some(pool) = DB_POOL.get() {
         let hdfs_config_list: Vec<HdfsConfig> =
             sqlx::query_as::<_, HdfsConfig>("select * from hdfs_config where id=?")
@@ -96,20 +96,20 @@ pub async fn get_one_hdfs_config(id: i64) -> Result<HdfsConfig, anyhow::Error> {
         if hdfs_config_list.len() > 0 {
             return Ok(hdfs_config_list[0].clone());
         } else {
-            return Err(anyhow::Error::msg("no config found").into());
+            return Err("no config found".to_owned());
         }
     } else {
-        return Err(anyhow::Error::msg("Database connection pool is not initialized").into());
+        return Err("Database connection pool is not initialized".to_owned());
     }
 }
 //获取单个hdfs配置
 #[tauri::command]
-pub async fn get_hdfs_config(id: i64) -> anyhow_tauri::TAResult<HdfsConfig> {
+pub async fn get_hdfs_config(id: i64) -> Result<HdfsConfig, String> {
     crate::db::db_init::init_db()
         .await
-        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+        .map_err(|e| e.to_string())?;
 
     return get_one_hdfs_config(id)
         .await
-        .map_err(|e| anyhow::anyhow!(e.to_string()).into());
+        .map_err(|e| e.to_string());
 }
