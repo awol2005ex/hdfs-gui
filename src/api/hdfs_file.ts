@@ -59,3 +59,14 @@ export const get_file_preview_content = async (id: number, file_path : string) =
   });
   return result;
 }
+
+
+//下载文件
+export const download_file = async (id: number, source_file_path : string, target_file_parent_path : string) => {
+  const result: string = await invoke("download_file", {
+    id: id,
+    sourceFilePath: source_file_path,
+    targetFileParentPath: target_file_parent_path,
+  });
+  return result;
+}

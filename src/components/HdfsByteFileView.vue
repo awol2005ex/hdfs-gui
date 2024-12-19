@@ -19,12 +19,13 @@ import { Codemirror } from "vue-codemirror";
 import { vue } from "@codemirror/lang-vue";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { get_file_preview_content } from "../api/hdfs_file.ts";
+import { ElMessage } from "element-plus";
 interface Props {
   codeStyle?: CSSProperties; // 代码样式
   dark?: boolean; // 是否暗黑主题
   code?: string; // 代码字符串
-  hdfsConfigId: number;
-  filePath: string;
+  hdfsConfigId?: number;
+  filePath?: string;
   // placeholder?: string // 占位文本
   // autofocus?: boolean // 自动聚焦
   // disabled?: boolean // 禁用输入行为和更改状态
@@ -65,9 +66,8 @@ function onBlur(viewUpdate: any) {
 
 const reloadFile= async () => {
     try{ 
-         console.log(props)
          if(props.hdfsConfigId >0 && props.filePath != ""){
-           const content = await get_file_preview_content( parseInt(props.hdfsConfigId as string) ,(props.filePath as string));
+           const content = await get_file_preview_content( (props.hdfsConfigId as number) ,(props.filePath as string));
    
            codeValue.value = content;
          }
@@ -80,7 +80,7 @@ const reloadFile= async () => {
 
     }
 }
-watch( ()=>props.id , (newId)=>{
+watch( ()=>props.hdfsConfigId , (_newId)=>{
 
     reloadFile()
   

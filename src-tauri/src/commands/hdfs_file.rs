@@ -1,14 +1,13 @@
 use std::collections::HashMap;
 
-use anyhow;
 use bytes::Bytes;
 use hdfs_native::client::FileStatus;
 use hdfs_native::WriteOptions;
 use serde::{Deserialize, Serialize};
 
-use super::hdfs_config::{self, HdfsConfig};
+use super::hdfs_config::HdfsConfig;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufReader, Read, Write};
 //hdfs配置
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Clone)]
 pub struct HdfsFile {
@@ -24,23 +23,24 @@ pub struct HdfsFile {
     pub length: usize,
 }
 pub async fn get_hdfs_client(id: i64) -> Result<hdfs_native::Client, String> {
-    let hdfsConfig: HdfsConfig = crate::commands::hdfs_config::get_one_hdfs_config(id).await?;
+    let hdfs_config_instance: HdfsConfig =
+        crate::commands::hdfs_config::get_one_hdfs_config(id).await?;
 
-    let other_config = serde_json::from_str::<HashMap<String, String>>(&hdfsConfig.hdfs_config)
-        .unwrap_or_default();
+    let other_config =
+        serde_json::from_str::<HashMap<String, String>>(&hdfs_config_instance.hdfs_config)
+            .unwrap_or_default();
 
-    let hdfs_url = hdfsConfig.hdfs_url;
-    let client = hdfs_native::Client::new_with_config(&hdfs_url, other_config)
-        .map_err(|e| e.to_string())?;
+    let hdfs_url = hdfs_config_instance.hdfs_url;
+    /*TODO 自动kerberos登录*/
+
+    let client =
+        hdfs_native::Client::new_with_config(&hdfs_url, other_config).map_err(|e| e.to_string())?;
 
     return Ok(client);
 }
 //获取hdfs配置列表
 #[tauri::command]
-pub async fn get_hdfs_file_list(
-    id: i64,
-    parent_path: String,
-) -> Result<Vec<HdfsFile>, String>  {
+pub async fn get_hdfs_file_list(id: i64, parent_path: String) -> Result<Vec<HdfsFile>, String> {
     println!("get_hdfs_file_list:parent_path:{}", &parent_path);
     let client = get_hdfs_client(id).await?;
     let files = client
@@ -49,7 +49,7 @@ pub async fn get_hdfs_file_list(
         .map_err(|e| e.to_string())?;
 
     println!("get_hdfs_file_list:files:{:?}", &files);
-    let hdfsFiles: Vec<HdfsFile> = files
+    let hdfs_files: Vec<HdfsFile> = files
         .iter()
         .map(|file: &FileStatus| HdfsFile {
             //根据路径获取文件名
@@ -70,8 +70,8 @@ pub async fn get_hdfs_file_list(
             length: file.length.clone(),
         })
         .collect();
-    println!("get_hdfs_file_list:hdfsFiles:{:?}", &hdfsFiles);
-    Ok(hdfsFiles)
+    println!("get_hdfs_file_list:hdfsFiles:{:?}", &hdfs_files);
+    Ok(hdfs_files)
 }
 
 //上传文件
@@ -112,10 +112,7 @@ pub async fn upload_hdfs_file(
             let s = &buf[0..nbytes_read];
             let b = bytes::Bytes::copy_from_slice(s);
             // 从buffer构造字符串
-            let writeSize =hdfs_file_writer
-                .write(b)
-                .await
-                .map_err(|e| e.to_string())?;
+            let _write_size = hdfs_file_writer.write(b).await.map_err(|e| e.to_string())?;
             //println!("writeSize:{}", writeSize);
         } else {
             break;
@@ -126,19 +123,15 @@ pub async fn upload_hdfs_file(
     Ok(true)
 }
 
-
 //删除文件
 #[tauri::command]
-pub async fn delete_hdfs_files(
-    id: i64,
-    file_path_list: Vec<String>,
-) ->  Result<bool, String>  {
+pub async fn delete_hdfs_files(id: i64, file_path_list: Vec<String>) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
     for file_path in file_path_list {
         client
             .delete(&file_path, true)
             .await
-            .map_err(|e|e.to_string())?;
+            .map_err(|e| e.to_string())?;
     }
     Ok(true)
 }
@@ -149,10 +142,10 @@ pub async fn create_hdfs_dir(
     id: i64,
     parent_path: String,
     dir_name: String,
-) -> Result<bool, String>  {
+) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
     client
-        .mkdirs(&format!("{}/{}", &parent_path, &dir_name),509, false)
+        .mkdirs(&format!("{}/{}", &parent_path, &dir_name), 509, false)
         .await
         .map_err(|e| e.to_string())?;
     Ok(true)
@@ -160,19 +153,57 @@ pub async fn create_hdfs_dir(
 
 //获取文件预览二进制内容
 #[tauri::command]
-pub async fn get_hdfs_file_content_preview(
-    id: i64,
-    file_path: String,
-) -> Result<String, String>  {
+pub async fn get_hdfs_file_content_preview(id: i64, file_path: String) -> Result<String, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
-    let mut hdfs_file_reader = client
-        .read(&file_path)
-        .await
-        .map_err(|e| e.to_string())?;
+    let mut hdfs_file_reader = client.read(&file_path).await.map_err(|e| e.to_string())?;
 
-    let buf:Bytes=hdfs_file_reader
-        .read(1*1024*1024)
+    let buf: Bytes = hdfs_file_reader
+        .read(1 * 1024 * 1024)
         .await
         .map_err(|e| e.to_string())?;
     Ok(buf.to_vec().into_iter().map(|x| x as char).collect())
+}
+
+//下载文件到目标目录
+#[tauri::command]
+pub async fn download_file(
+    id: i64,
+    source_file_path: String,
+    target_file_parent_path: String,
+) -> Result<bool, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+    let mut hdfs_file_reader = client
+        .read(&source_file_path)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let source_file_name = std::path::Path::new(&source_file_path)
+        .file_name()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap_or_default()
+        .to_string();
+
+    let mut target_file = File::create(&format!(
+        "{}/{}",
+        &target_file_parent_path, &source_file_name
+    ))
+    .map_err(|e| e.to_string())?;
+
+    loop {
+        if let Ok(b) = hdfs_file_reader.read(1024).await {
+            
+            // 如果没有字节可读，跳出循环
+            if b.len() == 0 {
+                break;
+            }
+            // 从buffer构造字符串
+            let _write_size = target_file.write(&b).map_err(|e| e.to_string())?;
+            //println!("writeSize:{}", writeSize);
+        } else {
+            break;
+        }
+    }
+
+    Ok(true)
 }

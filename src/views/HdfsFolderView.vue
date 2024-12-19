@@ -454,7 +454,7 @@ const uploadFileToHdfs =async () => {
 
 //删除文件
 const deleteFiles = async () => {
-  console.log(multipleSelection.value.map((item) => item.path).join(","))
+  //console.log(multipleSelection.value.map((item) => item.path).join(","))
   const s=await ElMessageBox.confirm(
     'Delete files '+multipleSelection.value.map((item) => item.path).join(",")+' . Continue?',
     'Warning',

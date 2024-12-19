@@ -1,4 +1,4 @@
-use anyhow;
+
 use serde::{Deserialize, Serialize};
 
 use crate::db::db_init::DB_POOL;
