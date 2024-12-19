@@ -191,7 +191,7 @@ pub async fn download_file(
     .map_err(|e| e.to_string())?;
 
     loop {
-        if let Ok(b) = hdfs_file_reader.read(1024).await {
+        if let Ok(b) = hdfs_file_reader.read(102400).await {
             
             // 如果没有字节可读，跳出循环
             if b.len() == 0 {
