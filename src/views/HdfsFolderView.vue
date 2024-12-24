@@ -6,30 +6,28 @@
           <tr>
             <td>
               <el-button-group style="float: left">
-              <el-button
-                type="primary"
-                :icon="HomeFilled"
-                circle
-                @click="backToHome"
-                title="Back To Home"
-              />
-              <el-button
-                type="primary"
-                :icon="Back"
-                circle
-                @click="backToLastPage"
-                title="Back To Last Page"
-              />
-              <el-button
-                type="primary"
-                :icon="Refresh"
-                circle
-                @click="refreshData"
-                title="Refresh"
+                <el-button
+                  type="primary"
+                  :icon="HomeFilled"
+                  circle
+                  @click="backToHome"
+                  title="Back To Home" />
+                <el-button
+                  type="primary"
+                  :icon="Back"
+                  circle
+                  @click="backToLastPage"
+                  title="Back To Last Page" />
+                <el-button
+                  type="primary"
+                  :icon="Refresh"
+                  circle
+                  @click="refreshData"
+                  title="Refresh"
               /></el-button-group>
               <el-input
                 v-model="search_words"
-                style="width: 240px; float: left;margin-left: 10px"
+                style="width: 240px; float: left; margin-left: 10px"
                 placeholder="Search File"
                 :prefix-icon="Search"
                 @change="on_search_words_change"
@@ -38,41 +36,39 @@
 
               <el-button-group style="float: right">
                 <el-button
-                type="primary"
-                :icon="FolderAdd"
-                circle
-                @click="NewFolder"
-                title="Create New Folder"
-              />
-              <el-button
-                type="primary"
-                :icon="Location"
-                circle
-                @click="goToLocation"
-                title="Go To Input Path"
-              />
+                  type="primary"
+                  :icon="FolderAdd"
+                  circle
+                  @click="NewFolder"
+                  title="Create New Folder"
+                />
+                <el-button
+                  type="primary"
+                  :icon="Location"
+                  circle
+                  @click="goToLocation"
+                  title="Go To Input Path"
+                />
 
-              <el-button
-                type="primary"
-                :icon="Upload"
-                circle
-                @click="uploadFileToHdfs"
-                title="Upload File To Hdfs"
-              />
-              <el-button
-                type="warning"
-                :icon="Delete"
-                circle
-                @click="deleteFiles"
-                title="Delete Files in Hdfs"
-              />
-            </el-button-group>
+                <el-button
+                  type="primary"
+                  :icon="Upload"
+                  circle
+                  @click="uploadFileToHdfs"
+                  title="Upload File To Hdfs"
+                />
+                <el-button
+                  type="warning"
+                  :icon="Delete"
+                  circle
+                  @click="deleteFiles"
+                  title="Delete Files in Hdfs"
+                />
+              </el-button-group>
             </td>
           </tr>
           <tr>
             <td>
-              
-
               <el-breadcrumb
                 separator="/"
                 style="float: left; padding-left: 10px"
@@ -111,9 +107,9 @@
           :data="fileListPageData"
           style="width: 100%"
           @sort-change="sortChange"
-            @selection-change="handleSelectionChange"
+          @selection-change="handleSelectionChange"
         >
-          <el-table-column type="selection"  width="55" />
+          <el-table-column type="selection" width="55" />
           <el-table-column prop="isdir" label="" width="60">
             <template #default="scope">
               <el-icon v-if="scope.row.isdir" :size="20">
@@ -175,7 +171,11 @@
             width="120"
             show-overflow-tooltip
             sortable="custom"
-          />
+          >
+            <template #default="scope">
+              {{ convertPermissionsToSymbolic(scope.row) }}
+            </template>
+          </el-table-column>
           <el-table-column
             prop="modification_time"
             label="Time"
@@ -216,13 +216,18 @@ import {
   Location,
   Upload,
   Delete,
-  FolderAdd
+  FolderAdd,
 } from "@element-plus/icons-vue";
-import { getHdfsFileList, HdfsFile ,uploadHdfsFile,deleteHdfsFiles,createHdfsFolder } from "../api/hdfs_file.ts";
-import { ElMessage, ElMessageBox,ElLoading  } from "element-plus";
+import {
+  getHdfsFileList,
+  HdfsFile,
+  uploadHdfsFile,
+  deleteHdfsFiles,
+  createHdfsFolder,
+} from "../api/hdfs_file.ts";
+import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
 //选择文件
-import { open } from '@tauri-apps/plugin-dialog';
-
+import { open } from "@tauri-apps/plugin-dialog";
 
 const router = useRouter();
 const route = useRoute();
@@ -305,7 +310,7 @@ const filert_by_search_words = () => {
 };
 //刷新表格
 const refreshData = () => {
-  const loadingInstance1 = ElLoading.service({ fullscreen: true })
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
   getHdfsFileList(
     parseInt(route.params.id as string),
     current_parent_path.value
@@ -313,7 +318,7 @@ const refreshData = () => {
     .then((res) => {
       fileListData.value = res;
       filert_by_search_words();
-      loadingInstance1.close()
+      loadingInstance1.close();
     })
     .catch((err) => {
       ElMessage({
@@ -321,7 +326,7 @@ const refreshData = () => {
         message: err.toString(),
         type: "error",
       });
-      loadingInstance1.close()
+      loadingInstance1.close();
       backToLastPage();
     });
 };
@@ -389,7 +394,7 @@ const sortProp = ref("");
 const sortOrder = ref("");
 //排序
 const sortChange = (row: { column: any; prop: any; order: any }) => {
-  const {  prop, order } = row;
+  const { prop, order } = row;
 
   sortProp.value = prop;
   sortOrder.value = order;
@@ -411,130 +416,177 @@ const goToLocation = async () => {
   }
 };
 //多选文件
-const multipleSelection = ref<HdfsFile[]>([])
+const multipleSelection = ref<HdfsFile[]>([]);
 const handleSelectionChange = (val: HdfsFile[]) => {
   multipleSelection.value = val;
 };
 //上传文件
-const uploadFileToHdfs =async () => {
+const uploadFileToHdfs = async () => {
   const selected = await open({
     multiple: false,
-    directory: false
-  })
+    directory: false,
+  });
   if (selected) {
-    const loadingInstance1 = ElLoading.service({ fullscreen: true })
-    try{
-      const result =await uploadHdfsFile(parseInt(route.params.id as string), current_parent_path.value,selected)
-      if(result){
+    const loadingInstance1 = ElLoading.service({ fullscreen: true });
+    try {
+      const result = await uploadHdfsFile(
+        parseInt(route.params.id as string),
+        current_parent_path.value,
+        selected
+      );
+      if (result) {
         ElMessage({
           showClose: true,
           message: "上传成功",
           type: "success",
         });
-        refreshData()
-        loadingInstance1.close()
-      }else{
+        refreshData();
+        loadingInstance1.close();
+      } else {
         ElMessage({
           showClose: true,
           message: "上传失败",
           type: "error",
         });
-        loadingInstance1.close()
+        loadingInstance1.close();
       }
-    }catch(err:any){
+    } catch (err: any) {
       ElMessage({
         showClose: true,
         message: err.toString(),
         type: "error",
       });
-      loadingInstance1.close()
+      loadingInstance1.close();
     }
   }
-}
+};
 
 //删除文件
 const deleteFiles = async () => {
   //console.log(multipleSelection.value.map((item) => item.path).join(","))
-  const s=await ElMessageBox.confirm(
-    'Delete files '+multipleSelection.value.map((item) => item.path).join(",")+' . Continue?',
-    'Warning',
+  const s = await ElMessageBox.confirm(
+    "Delete files " +
+      multipleSelection.value.map((item) => item.path).join(",") +
+      " . Continue?",
+    "Warning",
     {
-      confirmButtonText: 'OK',
-      cancelButtonText: 'Cancel',
-      type: 'warning',
+      confirmButtonText: "OK",
+      cancelButtonText: "Cancel",
+      type: "warning",
       draggable: true,
     }
-  )
-  if(s!="confirm"){
-     return  
+  );
+  if (s != "confirm") {
+    return;
   }
-  const loadingInstance1 = ElLoading.service({ fullscreen: true })
-  try{
-    const result =await deleteHdfsFiles(parseInt(route.params.id as string),  multipleSelection.value.map((item) => item.path))
-    if(result){
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
+  try {
+    const result = await deleteHdfsFiles(
+      parseInt(route.params.id as string),
+      multipleSelection.value.map((item) => item.path)
+    );
+    if (result) {
       ElMessage({
         showClose: true,
         message: "删除成功",
         type: "success",
       });
-      refreshData()
-      loadingInstance1.close()
-    }else{
+      refreshData();
+      loadingInstance1.close();
+    } else {
       ElMessage({
         showClose: true,
         message: "删除失败",
         type: "error",
       });
-      loadingInstance1.close()
+      loadingInstance1.close();
     }
-  }catch(err:any){
+  } catch (err: any) {
     ElMessage({
       showClose: true,
       message: err.toString(),
       type: "error",
     });
-    loadingInstance1.close()
+    loadingInstance1.close();
   }
-}
+};
 //创建目录
 const NewFolder = async () => {
-  const folderName = await ElMessageBox.prompt('Please input folder name', 'Prompt', {
-    confirmButtonText: 'OK',
-    cancelButtonText: 'Cancel',
-    inputPattern: /^[a-zA-Z0-9_-]{1,64}$/,
-    inputErrorMessage: 'Name is invalid',
-  })
-  if(folderName.action=="confirm" && folderName.value){
-    const loadingInstance1 = ElLoading.service({ fullscreen: true })
-    try{
-      const result =await createHdfsFolder(parseInt(route.params.id as string), current_parent_path.value, folderName.value)
-      if(result){
+  const folderName = await ElMessageBox.prompt(
+    "Please input folder name",
+    "Prompt",
+    {
+      confirmButtonText: "OK",
+      cancelButtonText: "Cancel",
+      inputPattern: /^[a-zA-Z0-9_-]{1,64}$/,
+      inputErrorMessage: "Name is invalid",
+    }
+  );
+  if (folderName.action == "confirm" && folderName.value) {
+    const loadingInstance1 = ElLoading.service({ fullscreen: true });
+    try {
+      const result = await createHdfsFolder(
+        parseInt(route.params.id as string),
+        current_parent_path.value,
+        folderName.value
+      );
+      if (result) {
         ElMessage({
           showClose: true,
           message: "Created successfully",
           type: "success",
         });
-        refreshData()
-        loadingInstance1.close()
-      }else{
+        refreshData();
+        loadingInstance1.close();
+      } else {
         ElMessage({
           showClose: true,
           message: "Create failed",
           type: "error",
         });
-        loadingInstance1.close()
+        loadingInstance1.close();
       }
-    }catch(err:any){
+    } catch (err: any) {
       ElMessage({
         showClose: true,
         message: err.toString(),
         type: "error",
       });
-      loadingInstance1.close()
+      loadingInstance1.close();
     }
   }
-}
+};
 
+//显示文件目录权限
+function convertPermissionsToSymbolic(row:HdfsFile) {
+  // 将十进制数转换为八进制字符串，并确保它是3位长。
+  const permissionNumber =row.permission;
+  let octal = ("000" + permissionNumber.toString(8)).slice(-3);
+
+  // 定义权限映射。
+  const permissionMap = [
+    "---",
+    "--x",
+    "-w-",
+    "-wx",
+    "r--",
+    "r-x",
+    "rw-",
+    "rwx",
+  ];
+
+  // 将八进制每一位转换为对应的权限字符串。
+  let permissions = octal
+    .split("")
+    .map((digit) => permissionMap[parseInt(digit, 8)])
+    .join("");
+
+  // 假设我们处理的是普通文件，所以添加 '-' 到最前面。
+  if(!row.isdir)
+  return "-" + permissions;
+  else 
+  return "d" + permissions;
+}
 </script>
 
 <style scoped></style>

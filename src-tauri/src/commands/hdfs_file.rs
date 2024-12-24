@@ -145,7 +145,7 @@ pub async fn create_hdfs_dir(
 ) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
     client
-        .mkdirs(&format!("{}/{}", &parent_path, &dir_name), 509, false)
+        .mkdirs(&format!("{}/{}", &parent_path, &dir_name), 0o755, false)
         .await
         .map_err(|e| e.to_string())?;
     Ok(true)
