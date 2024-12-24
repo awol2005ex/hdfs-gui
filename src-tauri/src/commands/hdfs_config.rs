@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 
 use crate::db::db_init::DB_POOL;
@@ -62,7 +61,6 @@ pub async fn save_hdfs_config(hdfs_config: HdfsConfig) -> Result<(), String> {
     Ok(())
 }
 
-
 #[tauri::command]
 pub async fn delete_hdfs_config(id: i64) -> Result<(), String> {
     crate::db::db_init::init_db()
@@ -70,10 +68,7 @@ pub async fn delete_hdfs_config(id: i64) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     if let Some(pool) = DB_POOL.get() {
-       
-            sqlx::query(
-                "update hdfs_config set del_flag=1 where id = ?",
-            )
+        sqlx::query("update hdfs_config set del_flag=1 where id = ?")
             .bind(id)
             .execute(pool)
             .await
@@ -85,7 +80,7 @@ pub async fn delete_hdfs_config(id: i64) -> Result<(), String> {
 }
 
 //获取单个hdfs配置
-pub async fn get_one_hdfs_config(id: i64) ->  Result<HdfsConfig, String> {
+pub async fn get_one_hdfs_config(id: i64) -> Result<HdfsConfig, String> {
     if let Some(pool) = DB_POOL.get() {
         let hdfs_config_list: Vec<HdfsConfig> =
             sqlx::query_as::<_, HdfsConfig>("select * from hdfs_config where id=?")
@@ -109,7 +104,30 @@ pub async fn get_hdfs_config(id: i64) -> Result<HdfsConfig, String> {
         .await
         .map_err(|e| e.to_string())?;
 
-    return get_one_hdfs_config(id)
-        .await
-        .map_err(|e| e.to_string());
+    return get_one_hdfs_config(id).await.map_err(|e| e.to_string());
+}
+//获取当前用户名
+pub async fn get_hdfs_username(id: i64) -> Result<String, String> {
+    let hdfs_config = get_one_hdfs_config(id).await.map_err(|e| e.to_string());
+
+    if let Ok(hc) = hdfs_config {
+        if let Ok(config_json) = serde_json::from_str::<serde_json::Value>(&hc.hdfs_config) {
+            if let Some(username) = config_json.get("dfs.namenode.kerberos.principal") {
+                return Ok(username
+                    .as_str()
+                    .unwrap_or_default()
+                    .to_string()
+                    .split("@")
+                    .next()
+                    .unwrap_or_default()
+                    .to_owned());
+            }
+        }
+    }
+
+    if std::env::var("HDFS_USERNAME").is_ok() {
+        return Ok(std::env::var("HDFS_USERNAME").unwrap_or_default());
+    }
+
+    return Err("no hdfs username found".to_owned());
 }

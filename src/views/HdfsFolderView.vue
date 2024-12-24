@@ -27,7 +27,7 @@
               /></el-button-group>
               <el-input
                 v-model="search_words"
-                style="width: 240px; float: left; margin-left: 10px"
+                style="width: 240px; float: left; margin-left: 10px;margin-top: 5px"
                 placeholder="Search File"
                 :prefix-icon="Search"
                 @change="on_search_words_change"
@@ -57,18 +57,25 @@
                   @click="uploadFileToHdfs"
                   title="Upload File To Hdfs"
                 />
-                <el-button
+                
+              </el-button-group>
+            </td>
+            <td><el-dropdown  split-button 
                   type="warning"
-                  :icon="Delete"
                   circle
                   @click="deleteFiles"
                   title="Delete Files in Hdfs"
-                />
-              </el-button-group>
-            </td>
+                  ><el-icon ><Delete/></el-icon><template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item  @click="deleteFilesForce"
+                        >Delete Files in Hdfs Skip Trash</el-dropdown-item
+                      >
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown></td>
           </tr>
           <tr>
-            <td>
+            <td colspan="2">
               <el-breadcrumb
                 separator="/"
                 style="float: left; padding-left: 10px"
@@ -224,6 +231,7 @@ import {
   uploadHdfsFile,
   deleteHdfsFiles,
   createHdfsFolder,
+  deleteHdfsFilesForce,
 } from "../api/hdfs_file.ts";
 import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
 //选择文件
@@ -488,7 +496,7 @@ const deleteFiles = async () => {
     if (result) {
       ElMessage({
         showClose: true,
-        message: "删除成功",
+        message: "Delete success",
         type: "success",
       });
       refreshData();
@@ -496,7 +504,7 @@ const deleteFiles = async () => {
     } else {
       ElMessage({
         showClose: true,
-        message: "删除失败",
+        message: "Delete failed",
         type: "error",
       });
       loadingInstance1.close();
@@ -510,6 +518,56 @@ const deleteFiles = async () => {
     loadingInstance1.close();
   }
 };
+
+const deleteFilesForce = async () => {
+  //console.log(multipleSelection.value.map((item) => item.path).join(","))
+  const s = await ElMessageBox.confirm(
+    "Delete files " +
+      multipleSelection.value.map((item) => item.path).join(",") +
+      " . Continue?",
+    "Warning",
+    {
+      confirmButtonText: "OK",
+      cancelButtonText: "Cancel",
+      type: "warning",
+      draggable: true,
+    }
+  );
+  if (s != "confirm") {
+    return;
+  }
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
+  try {
+    const result = await deleteHdfsFilesForce(
+      parseInt(route.params.id as string),
+      multipleSelection.value.map((item) => item.path)
+    );
+    if (result) {
+      ElMessage({
+        showClose: true,
+        message: "Delete success",
+        type: "success",
+      });
+      refreshData();
+      loadingInstance1.close();
+    } else {
+      ElMessage({
+        showClose: true,
+        message: "Delete failed",
+        type: "error",
+      });
+      loadingInstance1.close();
+    }
+  } catch (err: any) {
+    ElMessage({
+      showClose: true,
+      message: err.toString(),
+      type: "error",
+    });
+    loadingInstance1.close();
+  }
+};
+
 //创建目录
 const NewFolder = async () => {
   const folderName = await ElMessageBox.prompt(
@@ -558,9 +616,9 @@ const NewFolder = async () => {
 };
 
 //显示文件目录权限
-function convertPermissionsToSymbolic(row:HdfsFile) {
+function convertPermissionsToSymbolic(row: HdfsFile) {
   // 将十进制数转换为八进制字符串，并确保它是3位长。
-  const permissionNumber =row.permission;
+  const permissionNumber = row.permission;
   let octal = ("000" + permissionNumber.toString(8)).slice(-3);
 
   // 定义权限映射。
@@ -582,10 +640,8 @@ function convertPermissionsToSymbolic(row:HdfsFile) {
     .join("");
 
   // 假设我们处理的是普通文件，所以添加 '-' 到最前面。
-  if(!row.isdir)
-  return "-" + permissions;
-  else 
-  return "d" + permissions;
+  if (!row.isdir) return "-" + permissions;
+  else return "d" + permissions;
 }
 </script>
 

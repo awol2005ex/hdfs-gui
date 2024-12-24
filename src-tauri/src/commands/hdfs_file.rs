@@ -5,7 +5,7 @@ use hdfs_native::client::FileStatus;
 use hdfs_native::WriteOptions;
 use serde::{Deserialize, Serialize};
 
-use super::hdfs_config::HdfsConfig;
+use super::hdfs_config::{get_hdfs_username, HdfsConfig};
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
 //hdfs配置
@@ -41,14 +41,14 @@ pub async fn get_hdfs_client(id: i64) -> Result<hdfs_native::Client, String> {
 //获取hdfs配置列表
 #[tauri::command]
 pub async fn get_hdfs_file_list(id: i64, parent_path: String) -> Result<Vec<HdfsFile>, String> {
-    println!("get_hdfs_file_list:parent_path:{}", &parent_path);
+    //println!("get_hdfs_file_list:parent_path:{}", &parent_path);
     let client = get_hdfs_client(id).await?;
     let files = client
         .list_status(&parent_path, false)
         .await
         .map_err(|e| e.to_string())?;
 
-    println!("get_hdfs_file_list:files:{:?}", &files);
+    //println!("get_hdfs_file_list:files:{:?}", &files);
     let hdfs_files: Vec<HdfsFile> = files
         .iter()
         .map(|file: &FileStatus| HdfsFile {
@@ -70,7 +70,7 @@ pub async fn get_hdfs_file_list(id: i64, parent_path: String) -> Result<Vec<Hdfs
             length: file.length.clone(),
         })
         .collect();
-    println!("get_hdfs_file_list:hdfsFiles:{:?}", &hdfs_files);
+    //println!("get_hdfs_file_list:hdfsFiles:{:?}", &hdfs_files);
     Ok(hdfs_files)
 }
 
@@ -126,6 +126,33 @@ pub async fn upload_hdfs_file(
 //删除文件
 #[tauri::command]
 pub async fn delete_hdfs_files(id: i64, file_path_list: Vec<String>) -> Result<bool, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+    let username = get_hdfs_username(id).await.map_err(|e| e.to_string())?;
+
+    let trash_path = format!("/user/{}/.Trash/Current", &username);
+
+    for file_path in file_path_list {
+        let trash_target_path = format!("{}{}", &trash_path, &file_path);
+
+        match  std::path::Path::new(&trash_target_path)
+        .parent()
+        {
+            Some(trash_target_parent_path) => {
+                client
+                    .mkdirs(trash_target_parent_path.to_str().unwrap_or_default(), 0o755, true)
+                    .await
+                    .map_err(|e| e.to_string())?;
+            },
+            None => {},
+        };
+        client.rename(&file_path, &trash_target_path, true).await.map_err(|e| e.to_string())?;
+    }
+    Ok(true)
+}
+
+//删除文件(跳过垃圾箱)
+#[tauri::command]
+pub async fn delete_hdfs_files_force(id: i64, file_path_list: Vec<String>) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
     for file_path in file_path_list {
         client
