@@ -60,6 +60,15 @@ export const createHdfsFolder = async (id: number, parent_path: string, folder_n
   });
   return result;
 }
+//创建空白文件
+export const createHdfsEmptyFile = async (id: number, parent_path: string, file_name: string) => {
+  const result: Boolean = await invoke("create_hdfs_empty_file", {
+    id: id,
+    parentPath: parent_path,
+    fileName: file_name,
+  });
+  return result;
+}
 
 //查看文件预览内容
 export const get_file_preview_content = async (id: number, file_path : string) => {

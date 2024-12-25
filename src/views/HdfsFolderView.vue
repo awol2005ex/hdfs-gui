@@ -27,7 +27,12 @@
               /></el-button-group>
               <el-input
                 v-model="search_words"
-                style="width: 240px; float: left; margin-left: 10px;margin-top: 5px"
+                style="
+                  width: 240px;
+                  float: left;
+                  margin-left: 10px;
+                  margin-top: 5px;
+                "
                 placeholder="Search File"
                 :prefix-icon="Search"
                 @change="on_search_words_change"
@@ -44,6 +49,13 @@
                 />
                 <el-button
                   type="primary"
+                  :icon="DocumentAdd"
+                  circle
+                  @click="NewEmptyFile"
+                  title="Create New File"
+                />
+                <el-button
+                  type="primary"
                   :icon="Location"
                   circle
                   @click="goToLocation"
@@ -57,22 +69,25 @@
                   @click="uploadFileToHdfs"
                   title="Upload File To Hdfs"
                 />
-                
               </el-button-group>
             </td>
-            <td><el-dropdown  split-button 
-                  type="warning"
-                  circle
-                  @click="deleteFiles"
-                  title="Delete Files in Hdfs"
-                  ><el-icon ><Delete/></el-icon><template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item  @click="deleteFilesForce"
-                        >Delete Files in Hdfs Skip Trash</el-dropdown-item
-                      >
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown></td>
+            <td>
+              <el-dropdown
+                split-button
+                type="warning"
+                circle
+                @click="deleteFiles"
+                title="Delete Files in Hdfs"
+                ><el-icon><Delete /></el-icon
+                ><template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="deleteFilesForce"
+                      >Delete Files in Hdfs Skip Trash</el-dropdown-item
+                    >
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </td>
           </tr>
           <tr>
             <td colspan="2">
@@ -224,6 +239,7 @@ import {
   Upload,
   Delete,
   FolderAdd,
+  DocumentAdd,
 } from "@element-plus/icons-vue";
 import {
   getHdfsFileList,
@@ -232,6 +248,7 @@ import {
   deleteHdfsFiles,
   createHdfsFolder,
   deleteHdfsFilesForce,
+  createHdfsEmptyFile,
 } from "../api/hdfs_file.ts";
 import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
 //选择文件
@@ -587,6 +604,54 @@ const NewFolder = async () => {
         parseInt(route.params.id as string),
         current_parent_path.value,
         folderName.value
+      );
+      if (result) {
+        ElMessage({
+          showClose: true,
+          message: "Created successfully",
+          type: "success",
+        });
+        refreshData();
+        loadingInstance1.close();
+      } else {
+        ElMessage({
+          showClose: true,
+          message: "Create failed",
+          type: "error",
+        });
+        loadingInstance1.close();
+      }
+    } catch (err: any) {
+      ElMessage({
+        showClose: true,
+        message: err.toString(),
+        type: "error",
+      });
+      loadingInstance1.close();
+    }
+  }
+};
+
+
+//创建空白文件
+const NewEmptyFile = async () => {
+  const fileName = await ElMessageBox.prompt(
+    "Please input file name",
+    "Prompt",
+    {
+      confirmButtonText: "OK",
+      cancelButtonText: "Cancel",
+      inputPattern: /^[a-zA-Z0-9_-]{1,64}$/,
+      inputErrorMessage: "Name is invalid",
+    }
+  );
+  if (fileName.action == "confirm" && fileName.value) {
+    const loadingInstance1 = ElLoading.service({ fullscreen: true });
+    try {
+      const result = await createHdfsEmptyFile(
+        parseInt(route.params.id as string),
+        current_parent_path.value,
+        fileName.value
       );
       if (result) {
         ElMessage({

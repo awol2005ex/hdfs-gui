@@ -178,6 +178,21 @@ pub async fn create_hdfs_dir(
     Ok(true)
 }
 
+//新建空白文件
+#[tauri::command]
+pub async fn create_hdfs_empty_file(
+    id: i64,
+    parent_path: String,
+    file_name: String,
+) -> Result<bool, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+    client
+        .create(&format!("{}/{}", &parent_path, &file_name), WriteOptions::default())
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
 //获取文件预览二进制内容
 #[tauri::command]
 pub async fn get_hdfs_file_content_preview(id: i64, file_path: String) -> Result<String, String> {
