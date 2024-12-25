@@ -53,11 +53,12 @@ export const deleteHdfsFilesForce = async (id: number, file_path_list: Array<str
 };
 
 //设置权限
-export const setHdfsFilesPermissions= async (id: number, file_path_list: Array<string>,permission: number) => {
+export const setHdfsFilesPermissions= async (id: number, file_path_list: Array<string>,permission: number,recursive:Boolean) => {
   const result: Boolean = await invoke("set_hdfs_files_permissions", {
     id: id,
     filePathList: file_path_list,
-    permission: permission
+    permission: permission,
+    recursive:recursive
   });
   return result;
 };

@@ -1587,6 +1587,8 @@ dependencies = [
  "anyhow",
  "bytes",
  "chrono",
+ "futures",
+ "futures-util",
  "hdfs-native",
  "once_cell",
  "serde",

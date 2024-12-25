@@ -2,12 +2,14 @@ use std::collections::HashMap;
 
 use bytes::Bytes;
 use hdfs_native::client::FileStatus;
-use hdfs_native::WriteOptions;
+use hdfs_native::{Client, WriteOptions};
 use serde::{Deserialize, Serialize};
 
 use super::hdfs_config::{get_hdfs_username, HdfsConfig};
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
+use futures::future::BoxFuture;
+use futures_util::FutureExt;
 //hdfs配置
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Clone)]
 pub struct HdfsFile {
@@ -255,12 +257,26 @@ pub async fn download_file(
 
 //设置权限
 #[tauri::command]
-pub async fn set_hdfs_files_permissions(id: i64, file_path_list: Vec<String>, permission: u32) -> Result<bool, String> {
+pub async fn set_hdfs_files_permissions(id: i64, file_path_list: Vec<String>, permission: u32, recursive:bool) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
     
-    for file_path in file_path_list {
+    return set_files_permission_impl(&client, file_path_list, permission, recursive).await;
+}
 
+pub  fn set_files_permission_impl(client: &Client, file_path_list: Vec<String>, permission: u32, recursive:bool) ->BoxFuture< Result<bool, String>> {
+    async move {
+    for file_path in file_path_list {
         client.set_permission(&file_path, permission).await.map_err(|e| e.to_string())?;
+        if recursive {
+            let  dir = client.list_status_iter(&file_path,recursive);
+            while let Some(entry) = dir.next().await {
+                let entry = entry.map_err(|e| e.to_string())?;
+                let entry_path = entry.path.replace("\\", "/");
+                //println!("entry_path:{}", &entry_path);
+                set_files_permission_impl(client, vec![entry_path], permission, false).await?;
+            }
+        }
     }
     Ok(true)
+   }.boxed()
 }

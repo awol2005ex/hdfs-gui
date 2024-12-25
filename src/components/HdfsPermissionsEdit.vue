@@ -19,6 +19,13 @@
         <td><input type="checkbox" v-model="permissionJson.other.write" />write</td>
         <td><input type="checkbox" v-model="permissionJson.other.execute" />execute</td>
     </tr>
+
+    <tr>
+        <td><input type="checkbox" v-model="recursive" />recursive</td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
    </table>
 
 </template>
@@ -60,6 +67,8 @@ const permissionJson = ref<PermissionResult>({
     execute: false,
     },
 });
+
+const recursive = ref(false);
 
 
 const setPermissionsValue=(newPermission:number)=>{
@@ -108,8 +117,9 @@ const getNewPermission=()=>{
     return parseInt(permission.join(''),8);
 }
 
+
 defineExpose({
-    setPermissionsValue,getNewPermission
+    setPermissionsValue,getNewPermission,recursive
 });
 
 </script>

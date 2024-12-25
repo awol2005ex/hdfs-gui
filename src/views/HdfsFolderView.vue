@@ -798,7 +798,8 @@ const SetPermissionsSubmit = async () => {
       const result = await setHdfsFilesPermissions(
         parseInt(route.params.id as string),
         multipleSelection.value.map((item) => item.path),
-        p
+        p,
+        hdfsPermissiionsEdit.value.recursive
       );
       if (result) {
         ElMessage({
