@@ -32,6 +32,8 @@ pub fn run() {
             commands::hdfs_file::delete_hdfs_files_force,
             //创建空白文件
             commands::hdfs_file::create_hdfs_empty_file,
+            //设置权限
+            commands::hdfs_file::set_hdfs_files_permissions,
             
         ])
         .run(tauri::generate_context!())

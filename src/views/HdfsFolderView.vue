@@ -69,6 +69,13 @@
                   @click="uploadFileToHdfs"
                   title="Upload File To Hdfs"
                 />
+                <el-button
+                  type="primary"
+                  :icon="Suitcase"
+                  circle
+                  @click="SetFilePermission"
+                  title="Set File Permission"
+                />
               </el-button-group>
             </td>
             <td>
@@ -223,10 +230,31 @@
       </el-main>
     </el-container>
   </div>
+
+  <el-dialog
+    v-model="SetPermissionsDialogVisible"
+    title="Set Permissions"
+    width="500"
+  >
+    <HdfsPermissiionsEdit
+      ref="hdfsPermissiionsEdit"
+      :permission="hdfsPermissiionsEditInit"
+    />
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="SetPermissionsDialogVisible = false"
+          >Cancel</el-button
+        >
+        <el-button type="primary" @click="SetPermissionsSubmit">
+          Confirm
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { nextTick, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
   Back,
@@ -240,6 +268,7 @@ import {
   Delete,
   FolderAdd,
   DocumentAdd,
+  Suitcase,
 } from "@element-plus/icons-vue";
 import {
   getHdfsFileList,
@@ -249,10 +278,13 @@ import {
   createHdfsFolder,
   deleteHdfsFilesForce,
   createHdfsEmptyFile,
+  setHdfsFilesPermissions,
 } from "../api/hdfs_file.ts";
 import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
 //选择文件
 import { open } from "@tauri-apps/plugin-dialog";
+
+import HdfsPermissiionsEdit from "../components/HdfsPermissionsEdit.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -462,7 +494,7 @@ const uploadFileToHdfs = async () => {
       if (result) {
         ElMessage({
           showClose: true,
-          message: "上传成功",
+          message: "Upload success",
           type: "success",
         });
         refreshData();
@@ -470,7 +502,7 @@ const uploadFileToHdfs = async () => {
       } else {
         ElMessage({
           showClose: true,
-          message: "上传失败",
+          message: "Upload failed",
           type: "error",
         });
         loadingInstance1.close();
@@ -489,6 +521,14 @@ const uploadFileToHdfs = async () => {
 //删除文件
 const deleteFiles = async () => {
   //console.log(multipleSelection.value.map((item) => item.path).join(","))
+  if (multipleSelection.value.length == 0) {
+    ElMessage({
+      showClose: true,
+      message: "Please select files",
+      type: "error",
+    });
+    return;
+  }
   const s = await ElMessageBox.confirm(
     "Delete files " +
       multipleSelection.value.map((item) => item.path).join(",") +
@@ -632,7 +672,6 @@ const NewFolder = async () => {
   }
 };
 
-
 //创建空白文件
 const NewEmptyFile = async () => {
   const fileName = await ElMessageBox.prompt(
@@ -708,6 +747,86 @@ function convertPermissionsToSymbolic(row: HdfsFile) {
   if (!row.isdir) return "-" + permissions;
   else return "d" + permissions;
 }
+
+//显示权限控制对话框
+const SetPermissionsDialogVisible = ref(false);
+//权限控制对话框
+const hdfsPermissiionsEdit = ref<InstanceType<typeof HdfsPermissiionsEdit>>();
+
+const hdfsPermissiionsEditInit = ref(509);
+//打开窗口
+const SetFilePermission = async () => {
+  if (multipleSelection.value.length == 0) {
+    ElMessage({
+      showClose: true,
+      message: "Please select files",
+      type: "error",
+    });
+    return;
+  }
+  SetPermissionsDialogVisible.value = true;
+  await nextTick();
+  //使用选中的文件权限为初始值
+  hdfsPermissiionsEditInit.value = multipleSelection.value[0].permission;
+  if (hdfsPermissiionsEdit.value) {
+    hdfsPermissiionsEdit.value.setPermissionsValue(
+      multipleSelection.value[0].permission
+    );
+  }
+};
+//提交新的权限
+const SetPermissionsSubmit = async () => {
+  if (hdfsPermissiionsEdit.value) {
+    const p = hdfsPermissiionsEdit.value.getNewPermission();
+    const s = await ElMessageBox.confirm(
+      "Change files Permissions " +
+        multipleSelection.value.map((item) => item.path).join(",") +
+        " . Continue?",
+      "Warning",
+      {
+        confirmButtonText: "OK",
+        cancelButtonText: "Cancel",
+        type: "warning",
+        draggable: true,
+      }
+    );
+    if (s != "confirm") {
+      return;
+    }
+    const loadingInstance1 = ElLoading.service({ fullscreen: true });
+    try {
+      const result = await setHdfsFilesPermissions(
+        parseInt(route.params.id as string),
+        multipleSelection.value.map((item) => item.path),
+        p
+      );
+      if (result) {
+        ElMessage({
+          showClose: true,
+          message: "Change success",
+          type: "success",
+        });
+        SetPermissionsDialogVisible.value = false;
+        refreshData();
+        loadingInstance1.close();
+      } else {
+        ElMessage({
+          showClose: true,
+          message: "Change failed",
+          type: "error",
+        });
+        loadingInstance1.close();
+      }
+    } catch (err: any) {
+      ElMessage({
+        showClose: true,
+        message: err.toString(),
+        type: "error",
+      });
+      loadingInstance1.close();
+    }
+  }
+};
 </script>
 
 <style scoped></style>

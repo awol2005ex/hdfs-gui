@@ -249,3 +249,18 @@ pub async fn download_file(
 
     Ok(true)
 }
+
+
+
+
+//设置权限
+#[tauri::command]
+pub async fn set_hdfs_files_permissions(id: i64, file_path_list: Vec<String>, permission: u32) -> Result<bool, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+    
+    for file_path in file_path_list {
+
+        client.set_permission(&file_path, permission).await.map_err(|e| e.to_string())?;
+    }
+    Ok(true)
+}

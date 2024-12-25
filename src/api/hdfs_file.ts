@@ -51,6 +51,20 @@ export const deleteHdfsFilesForce = async (id: number, file_path_list: Array<str
   });
   return result;
 };
+
+//设置权限
+export const setHdfsFilesPermissions= async (id: number, file_path_list: Array<string>,permission: number) => {
+  const result: Boolean = await invoke("set_hdfs_files_permissions", {
+    id: id,
+    filePathList: file_path_list,
+    permission: permission
+  });
+  return result;
+};
+
+
+
+
 //创建目录
 export const createHdfsFolder = async (id: number, parent_path: string, folder_name: string) => {
   const result: Boolean = await invoke("create_hdfs_dir", {
