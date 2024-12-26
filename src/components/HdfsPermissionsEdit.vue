@@ -30,7 +30,7 @@
 
 </template>
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref } from "vue";
 interface Props {
   permission?: number;
 }
@@ -119,7 +119,7 @@ const getNewPermission=()=>{
 
 
 defineExpose({
-    setPermissionsValue,getNewPermission,recursive
+    setPermissionsValue,getNewPermission,recursive,props
 });
 
 </script>

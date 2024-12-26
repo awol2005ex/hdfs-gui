@@ -162,7 +162,7 @@ const DownloadFile = async () => {
   }
 };
 
-watch(route, (to, from) => {
+watch(route, () => {
   if(route.query.mode){
      mode.value =route.query.mode.toString() ;
   } else{

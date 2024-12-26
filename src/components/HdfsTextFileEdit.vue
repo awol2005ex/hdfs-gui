@@ -31,7 +31,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { get_file_content, writeTextToHdfsFile } from "../api/hdfs_file.ts";
 import { ElMessage, ElLoading } from "element-plus";
 
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 const router = useRouter();
 
 interface Props {

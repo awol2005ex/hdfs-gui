@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, Reactive, ref, watch } from "vue";
+import { reactive, Reactive,  watch } from "vue";
 import { getHdfsFileAclList, HdfsAcl } from "../api/hdfs_acls";
 import { HdfsFile } from "../api/hdfs_file";
 
