@@ -36,10 +36,12 @@ pub fn run() {
             commands::hdfs_file::create_hdfs_empty_file,
             //设置权限
             commands::hdfs_file::set_hdfs_files_permissions,
-
             //写入文本
             commands::hdfs_file::write_text_hdfs_file,
-            
+            //获取单个hdfs文件
+            commands::hdfs_file::get_hdfs_file,
+            //改名
+            commands::hdfs_file::rename_hdfs_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

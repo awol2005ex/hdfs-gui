@@ -40,7 +40,7 @@ pub async fn get_hdfs_client(id: i64) -> Result<hdfs_native::Client, String> {
 
     return Ok(client);
 }
-//获取hdfs配置列表
+//获取hdfs文件列表
 #[tauri::command]
 pub async fn get_hdfs_file_list(id: i64, parent_path: String) -> Result<Vec<HdfsFile>, String> {
     //println!("get_hdfs_file_list:parent_path:{}", &parent_path);
@@ -76,6 +76,40 @@ pub async fn get_hdfs_file_list(id: i64, parent_path: String) -> Result<Vec<Hdfs
     Ok(hdfs_files)
 }
 
+//获取hdfs单个文件状态
+#[tauri::command]
+pub async fn get_hdfs_file(id: i64, file_path: String) -> Result<HdfsFile, String> {
+    let client = get_hdfs_client(id).await?;
+    let file = client
+        .get_file_info(&file_path)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    //println!("get_hdfs_file_list:files:{:?}", &files);
+    let hdfs_file = HdfsFile {
+        //根据路径获取文件名
+        name: std::path::Path::new(&file.path)
+            .file_name()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default()
+            .to_string(),
+        path: file.path.clone().replace("\\", "/"),
+        parent_path: std::path::Path::new(&file.path)
+            .parent()
+            .map_or("", |v| v.to_str().unwrap_or_default())
+            .to_string(),
+        owner: file.owner.clone(),
+        group: file.group.clone(),
+        isdir: file.isdir.clone(),
+        permission: file.permission.clone(),
+        modification_time: file.modification_time.clone(),
+        access_time: file.access_time.clone(),
+        length: file.length.clone(),
+    };
+    //println!("get_hdfs_file_list:hdfsFiles:{:?}", &hdfs_files);
+    Ok(hdfs_file)
+}
 //上传文件
 #[tauri::command]
 pub async fn upload_hdfs_file(
@@ -190,6 +224,29 @@ pub async fn delete_hdfs_files_force(id: i64, file_path_list: Vec<String>) -> Re
             .await
             .map_err(|e| e.to_string())?;
     }
+    Ok(true)
+}
+
+//改名
+#[tauri::command]
+pub async fn rename_hdfs_file(
+    id: i64,
+    old_file_path: String,
+    new_file_name: String,
+    overwrite: bool,
+) -> Result<bool, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+    let old_file_parent_path = std::path::Path::new(&old_file_path)
+        .parent()
+        .map_or("", |v| v.to_str().unwrap_or_default())
+        .to_string();
+
+    let new_file_path = format!("{}/{}", &old_file_parent_path, &new_file_name);
+    client
+        .rename(&old_file_path, &new_file_path, overwrite)
+        .await
+        .map_err(|e| e.to_string())?;
+
     Ok(true)
 }
 

@@ -14,18 +14,16 @@ export const getHdfsConfigList = async () => {
 };
 
 //保证HDFS连接配置
-export const saveHdfsConfig = async (hdfs_config:HdfsConfig) => {
-  
-  await invoke("save_hdfs_config", {hdfsConfig:hdfs_config});
-  
+export const saveHdfsConfig = async (hdfs_config: HdfsConfig) => {
+  await invoke("save_hdfs_config", { hdfsConfig: hdfs_config });
 };
 
 //获取HDFS连接配置列表
-export const getHdfsConfig = async (id:number) => {
-  const result: HdfsConfig = await invoke("get_hdfs_config", {id:id});
+export const getHdfsConfig = async (id: number) => {
+  const result: HdfsConfig = await invoke("get_hdfs_config", { id: id });
   return result;
 };
 //删除HDFS连接配置
-export const deleteHdfsConfig = async (id:number) => {
-   await invoke("delete_hdfs_config", {id:id});
+export const deleteHdfsConfig = async (id: number) => {
+  await invoke("delete_hdfs_config", { id: id });
 };

@@ -153,7 +153,7 @@
           <el-table-column
             prop="name"
             label="Name"
-            width="400"
+            width="auto"
             show-overflow-tooltip
             sortable="custom"
           >
@@ -197,7 +197,7 @@
           <el-table-column
             prop="permission"
             label="Permission"
-            width="120"
+            width="140"
             show-overflow-tooltip
             sortable="custom"
           >
@@ -214,6 +214,30 @@
           >
             <template #default="scope">
               {{ new Date(scope.row.modification_time).toLocaleString() }}
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            label="Operation"
+            width="180"
+          >
+            <template #default="scope">
+              <el-button-group
+          style="float: left; margin-left: 20px"
+        >
+              <el-button
+                type="primary"
+                size="small"
+                @click="SetFileAclsPermissions(scope.row)"
+                >acls</el-button
+              >
+              <el-button
+                type="warning"
+                size="small"
+                @click="RenameFile(scope.row)"
+                >Rename</el-button
+              >
+             </el-button-group>
             </template>
           </el-table-column>
         </el-table>
@@ -279,6 +303,8 @@ import {
   deleteHdfsFilesForce,
   createHdfsEmptyFile,
   setHdfsFilesPermissions,
+  renameHdfsFile,
+  getHdfsFile,
 } from "../api/hdfs_file.ts";
 import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
 //选择文件
@@ -828,6 +854,94 @@ const SetPermissionsSubmit = async () => {
     }
   }
 };
+
+//设置ACLS（todo）
+const SetFileAclsPermissions= async (file: HdfsFile) => {
+  
+}
+//文件改名
+const RenameFile = async (file: HdfsFile) => {
+  const s = await ElMessageBox.prompt(
+    "Rename " + file.path + " . Continue?",
+    "Warning",
+    {
+      confirmButtonText: "OK",
+      cancelButtonText: "Cancel",
+      type: "warning",
+      draggable: true,
+    }
+  );
+  if (s.action != "confirm") {
+    return;
+  }
+
+  const file_parent_path= file.path.substring(0,file.path.lastIndexOf("/"));
+  const new_file_path= file_parent_path+"/"+s.value;
+  let new_file =null;
+
+  try{
+      new_file=await getHdfsFile(parseInt(route.params.id as string),new_file_path);
+  }catch(err:any){
+    
+  }
+  let overwrite =false;
+  if(new_file){
+    const s2 = await ElMessageBox.confirm(
+    "File " + new_file_path + " exists. Overwrite?",
+    "Warning",
+    {
+      confirmButtonText: "OK",
+      cancelButtonText: "Cancel",
+      type: "warning",
+      draggable: true,
+    }
+  );
+  if (s2.action != "confirm") {
+    overwrite =true
+   } else {
+   
+    return ;
+   }
+  }
+  
+
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
+  try {
+    const result = await renameHdfsFile(
+      parseInt(route.params.id as string),
+      file.path,
+      s.value,
+      overwrite
+    );
+    if (result) {
+      ElMessage({
+        showClose: true,
+        message: "Rename success",
+        type: "success",
+      });
+      refreshData();
+      loadingInstance1.close();
+    } else {
+      ElMessage({
+        showClose: true,
+        message: "Rename failed",
+        type: "error",
+      });
+      loadingInstance1.close();
+    }
+
+    loadingInstance1.close();
+
+  }catch (err: any) {
+    ElMessage({
+      showClose: true,
+      message: err.toString(),
+      type: "error",
+    });
+    loadingInstance1.close();
+  }
+  
+}
 </script>
 
 <style scoped></style>
