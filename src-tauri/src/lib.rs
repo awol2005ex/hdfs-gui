@@ -46,6 +46,8 @@ pub fn run() {
             rename_hdfs_file,
             //获取hdfs文件acl列表
             get_hdfs_file_acl_list,
+            //添加acl
+            add_acl,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

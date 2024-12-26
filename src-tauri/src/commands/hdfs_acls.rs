@@ -1,4 +1,4 @@
-
+use hdfs_native::acl::AclEntry;
 use serde::{Deserialize, Serialize};
 
 use crate::HdfsFile;
@@ -27,25 +27,30 @@ pub struct HdfsAclEntry {
 pub async fn get_hdfs_file_acl_list(id: i64, file_path: String) -> Result<HdfsAcl, String> {
     //println!("get_hdfs_file_list:parent_path:{}", &parent_path);
     let client = get_hdfs_client(id).await?;
-    let file_status =client.get_file_info(&file_path).await.map_err(|e| e.to_string())?;
+    let file_status = client
+        .get_file_info(&file_path)
+        .await
+        .map_err(|e| e.to_string())?;
     let acl_status = client
         .get_acl_status(&file_path)
         .await
         .map_err(|e| e.to_string())?;
-    let hdfs_acls = HdfsAcl{
+    let hdfs_acls = HdfsAcl {
         owner: acl_status.owner,
         group: acl_status.group,
         sticky: acl_status.sticky,
-        entries: acl_status.entries.into_iter().map(|entry|{
-             HdfsAclEntry{
+        entries: acl_status
+            .entries
+            .into_iter()
+            .map(|entry| HdfsAclEntry {
                 rtype: entry.r#type.to_string(),
                 scope: entry.scope.to_string(),
                 permissions: entry.permissions.to_string(),
                 name: entry.name,
-            }
-        }).collect(),
+            })
+            .collect(),
         permission: acl_status.permission,
-        filestatus:HdfsFile {
+        filestatus: HdfsFile {
             //根据路径获取文件名
             name: std::path::Path::new(&file_status.path)
                 .file_name()
@@ -65,9 +70,32 @@ pub async fn get_hdfs_file_acl_list(id: i64, file_path: String) -> Result<HdfsAc
             modification_time: file_status.modification_time.clone(),
             access_time: file_status.access_time.clone(),
             length: file_status.length.clone(),
-        }
+        },
     };
 
-
     Ok(hdfs_acls)
+}
+
+//上传文件
+#[tauri::command]
+pub async fn add_acl(
+    id: i64,
+    file_path: String,
+    rtype: String,
+    scope: String,
+    permissions: String,
+    name: Option<String>,
+) -> Result<bool, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+
+    println!("add_acl:file_path:{}, rtype:{}, scope:{}, permissions:{}, name:{}", &file_path, &rtype, &scope, &permissions, &name.to_owned().unwrap_or_default());
+    client
+        .modify_acl_entries(
+            &file_path,
+            vec![AclEntry::new(rtype, scope, permissions, name)],
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+
+    return Ok(true);
 }
