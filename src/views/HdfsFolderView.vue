@@ -217,27 +217,22 @@
             </template>
           </el-table-column>
 
-          <el-table-column
-            label="Operation"
-            width="180"
-          >
+          <el-table-column label="Operation" width="180">
             <template #default="scope">
-              <el-button-group
-          style="float: left; margin-left: 20px"
-        >
-              <el-button
-                type="primary"
-                size="small"
-                @click="SetFileAclsPermissions(scope.row)"
-                >acls</el-button
-              >
-              <el-button
-                type="warning"
-                size="small"
-                @click="RenameFile(scope.row)"
-                >Rename</el-button
-              >
-             </el-button-group>
+              <el-button-group style="float: left; margin-left: 20px">
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="SetFileAclsPermissions(scope.row)"
+                  >acls</el-button
+                >
+                <el-button
+                  type="warning"
+                  size="small"
+                  @click="RenameFile(scope.row)"
+                  >Rename</el-button
+                >
+              </el-button-group>
             </template>
           </el-table-column>
         </el-table>
@@ -272,6 +267,26 @@
         <el-button type="primary" @click="SetPermissionsSubmit">
           Confirm
         </el-button>
+      </div>
+    </template>
+  </el-dialog>
+
+
+  <el-dialog
+    v-model="SetAclsDialogVisible"
+    title="Set Acls"
+    width="1000"
+  >
+    <HdfsFileAclsEdit
+      ref="hdfsFileAclsEdit"
+      :filePath="selectAclsfilePath"
+      :hdfsConfigId="parseInt(route.params.id as string)"
+    />
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="SetAclsDialogVisible = false"
+          >Close</el-button
+        >
       </div>
     </template>
   </el-dialog>
@@ -311,7 +326,7 @@ import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
 import { open } from "@tauri-apps/plugin-dialog";
 
 import HdfsPermissiionsEdit from "../components/HdfsPermissionsEdit.vue";
-
+import HdfsFileAclsEdit from "../components/HdfsFileAclsEdit.vue";
 const router = useRouter();
 const route = useRoute();
 
@@ -856,9 +871,13 @@ const SetPermissionsSubmit = async () => {
 };
 
 //设置ACLS（todo）
-const SetFileAclsPermissions= async (file: HdfsFile) => {
-  
-}
+const SetFileAclsPermissions = async (file: HdfsFile) => {
+  //打开窗口
+  SetAclsDialogVisible.value = true;
+  await nextTick();
+
+  selectAclsfilePath.value = file.path;
+};
 //文件改名
 const RenameFile = async (file: HdfsFile) => {
   const s = await ElMessageBox.prompt(
@@ -875,35 +894,34 @@ const RenameFile = async (file: HdfsFile) => {
     return;
   }
 
-  const file_parent_path= file.path.substring(0,file.path.lastIndexOf("/"));
-  const new_file_path= file_parent_path+"/"+s.value;
-  let new_file =null;
+  const file_parent_path = file.path.substring(0, file.path.lastIndexOf("/"));
+  const new_file_path = file_parent_path + "/" + s.value;
+  let new_file = null;
 
-  try{
-      new_file=await getHdfsFile(parseInt(route.params.id as string),new_file_path);
-  }catch(err:any){
-    
-  }
-  let overwrite =false;
-  if(new_file){
+  try {
+    new_file = await getHdfsFile(
+      parseInt(route.params.id as string),
+      new_file_path
+    );
+  } catch (err: any) {}
+  let overwrite = false;
+  if (new_file) {
     const s2 = await ElMessageBox.confirm(
-    "File " + new_file_path + " exists. Overwrite?",
-    "Warning",
-    {
-      confirmButtonText: "OK",
-      cancelButtonText: "Cancel",
-      type: "warning",
-      draggable: true,
+      "File " + new_file_path + " exists. Overwrite?",
+      "Warning",
+      {
+        confirmButtonText: "OK",
+        cancelButtonText: "Cancel",
+        type: "warning",
+        draggable: true,
+      }
+    );
+    if (s2.action != "confirm") {
+      overwrite = true;
+    } else {
+      return;
     }
-  );
-  if (s2.action != "confirm") {
-    overwrite =true
-   } else {
-   
-    return ;
-   }
   }
-  
 
   const loadingInstance1 = ElLoading.service({ fullscreen: true });
   try {
@@ -931,8 +949,7 @@ const RenameFile = async (file: HdfsFile) => {
     }
 
     loadingInstance1.close();
-
-  }catch (err: any) {
+  } catch (err: any) {
     ElMessage({
       showClose: true,
       message: err.toString(),
@@ -940,8 +957,14 @@ const RenameFile = async (file: HdfsFile) => {
     });
     loadingInstance1.close();
   }
-  
-}
+};
+
+//选中的acl file
+const selectAclsfilePath = ref("");
+//打开Acls编辑框
+const SetAclsDialogVisible = ref(false);
+//Acls编辑框
+const hdfsFileAclsEdit=ref<InstanceType<typeof HdfsFileAclsEdit>>();
 </script>
 
 <style scoped></style>
