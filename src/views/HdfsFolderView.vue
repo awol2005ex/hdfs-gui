@@ -217,7 +217,7 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="Operation" width="180">
+          <el-table-column label="Operation" width="auto">
             <template #default="scope">
               <el-button-group style="float: left; margin-left: 20px">
                 <el-button
@@ -231,6 +231,12 @@
                   size="small"
                   @click="RenameFile(scope.row)"
                   >Rename</el-button
+                >
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="CopyPath(scope.row)"
+                  >Copy Path</el-button
                 >
               </el-button-group>
             </template>
@@ -965,6 +971,15 @@ const selectAclsfilePath = ref("");
 const SetAclsDialogVisible = ref(false);
 //Acls编辑框
 const hdfsFileAclsEdit=ref<InstanceType<typeof HdfsFileAclsEdit>>();
+//复制路径
+const CopyPath= async (file: HdfsFile) => {
+  await navigator.clipboard.writeText(file.path);
+  ElMessage({
+    showClose: true,
+    message: "Copy success",
+    type: "success",
+  });
+}
 </script>
 
 <style scoped></style>
