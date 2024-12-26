@@ -6,10 +6,10 @@ use hdfs_native::{Client, WriteOptions};
 use serde::{Deserialize, Serialize};
 
 use super::hdfs_config::{get_hdfs_username, HdfsConfig};
-use std::fs::File;
-use std::io::{BufReader, Read, Write};
 use futures::future::BoxFuture;
 use futures_util::FutureExt;
+use std::fs::File;
+use std::io::{BufReader, Read, Write};
 //hdfs配置
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Clone)]
 pub struct HdfsFile {
@@ -125,6 +125,29 @@ pub async fn upload_hdfs_file(
     Ok(true)
 }
 
+//写入文本
+#[tauri::command]
+pub async fn write_text_hdfs_file(
+    id: i64,
+    file_path: String,
+    content: String,
+) -> Result<bool, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+
+    let mut hdfs_file_writer = client
+        .create(&file_path, WriteOptions::default().overwrite(true))
+        .await
+        .map_err(|e| e.to_string())?;
+
+    hdfs_file_writer
+        .write(bytes::Bytes::copy_from_slice(content.as_bytes()))
+        .await
+        .map_err(|e| e.to_string())?;
+    hdfs_file_writer.close().await.map_err(|e| e.to_string())?;
+
+    Ok(true)
+}
+
 //删除文件
 #[tauri::command]
 pub async fn delete_hdfs_files(id: i64, file_path_list: Vec<String>) -> Result<bool, String> {
@@ -136,18 +159,23 @@ pub async fn delete_hdfs_files(id: i64, file_path_list: Vec<String>) -> Result<b
     for file_path in file_path_list {
         let trash_target_path = format!("{}{}", &trash_path, &file_path);
 
-        match  std::path::Path::new(&trash_target_path)
-        .parent()
-        {
+        match std::path::Path::new(&trash_target_path).parent() {
             Some(trash_target_parent_path) => {
                 client
-                    .mkdirs(trash_target_parent_path.to_str().unwrap_or_default(), 0o755, true)
+                    .mkdirs(
+                        trash_target_parent_path.to_str().unwrap_or_default(),
+                        0o755,
+                        true,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
-            },
-            None => {},
+            }
+            None => {}
         };
-        client.rename(&file_path, &trash_target_path, true).await.map_err(|e| e.to_string())?;
+        client
+            .rename(&file_path, &trash_target_path, true)
+            .await
+            .map_err(|e| e.to_string())?;
     }
     Ok(true)
 }
@@ -189,23 +217,72 @@ pub async fn create_hdfs_empty_file(
 ) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
     client
-        .create(&format!("{}/{}", &parent_path, &file_name), WriteOptions::default())
+        .create(
+            &format!("{}/{}", &parent_path, &file_name),
+            WriteOptions::default(),
+        )
         .await
         .map_err(|e| e.to_string())?;
     Ok(true)
 }
 
 //获取文件预览二进制内容
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Clone)]
+pub struct HdfsFileContentPreview {
+    //文件大小
+    pub length: usize,
+    //预览内容
+    pub content: String,
+}
 #[tauri::command]
-pub async fn get_hdfs_file_content_preview(id: i64, file_path: String) -> Result<String, String> {
+pub async fn get_hdfs_file_content_preview(
+    id: i64,
+    file_path: String,
+) -> Result<HdfsFileContentPreview, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+    let file_status = client
+        .get_file_info(&file_path)
+        .await
+        .map_err(|e| e.to_string())?;
     let mut hdfs_file_reader = client.read(&file_path).await.map_err(|e| e.to_string())?;
 
     let buf: Bytes = hdfs_file_reader
         .read(1 * 1024 * 1024)
         .await
         .map_err(|e| e.to_string())?;
-    Ok(buf.to_vec().into_iter().map(|x| x as char).collect())
+    Ok(HdfsFileContentPreview {
+        content: String::from_utf8_lossy(buf.to_vec().as_slice()).to_string(),
+        length: file_status.length as usize,
+    })
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Clone)]
+pub struct HdfsFileContent {
+    //文件大小
+    pub length: usize,
+    //预览内容
+    pub content: String,
+}
+#[tauri::command]
+pub async fn get_hdfs_file_content(
+    id: i64,
+    file_path: String,
+) -> Result<HdfsFileContentPreview, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+    let file_status = client
+        .get_file_info(&file_path)
+        .await
+        .map_err(|e| e.to_string())?;
+    let mut hdfs_file_reader = client.read(&file_path).await.map_err(|e| e.to_string())?;
+
+    let buf: Bytes = hdfs_file_reader
+        .read(file_status.length as usize)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(HdfsFileContentPreview {
+        content: String::from_utf8_lossy(buf.to_vec().as_slice()).to_string(),
+        length: file_status.length as usize,
+    })
 }
 
 //下载文件到目标目录
@@ -236,7 +313,6 @@ pub async fn download_file(
 
     loop {
         if let Ok(b) = hdfs_file_reader.read(102400).await {
-            
             // 如果没有字节可读，跳出循环
             if b.len() == 0 {
                 break;
@@ -252,31 +328,42 @@ pub async fn download_file(
     Ok(true)
 }
 
-
-
-
 //设置权限
 #[tauri::command]
-pub async fn set_hdfs_files_permissions(id: i64, file_path_list: Vec<String>, permission: u32, recursive:bool) -> Result<bool, String> {
+pub async fn set_hdfs_files_permissions(
+    id: i64,
+    file_path_list: Vec<String>,
+    permission: u32,
+    recursive: bool,
+) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
-    
+
     return set_files_permission_impl(&client, file_path_list, permission, recursive).await;
 }
 
-pub  fn set_files_permission_impl(client: &Client, file_path_list: Vec<String>, permission: u32, recursive:bool) ->BoxFuture< Result<bool, String>> {
+pub fn set_files_permission_impl(
+    client: &Client,
+    file_path_list: Vec<String>,
+    permission: u32,
+    recursive: bool,
+) -> BoxFuture<Result<bool, String>> {
     async move {
-    for file_path in file_path_list {
-        client.set_permission(&file_path, permission).await.map_err(|e| e.to_string())?;
-        if recursive {
-            let  dir = client.list_status_iter(&file_path,recursive);
-            while let Some(entry) = dir.next().await {
-                let entry = entry.map_err(|e| e.to_string())?;
-                let entry_path = entry.path.replace("\\", "/");
-                //println!("entry_path:{}", &entry_path);
-                set_files_permission_impl(client, vec![entry_path], permission, false).await?;
+        for file_path in file_path_list {
+            client
+                .set_permission(&file_path, permission)
+                .await
+                .map_err(|e| e.to_string())?;
+            if recursive {
+                let dir = client.list_status_iter(&file_path, recursive);
+                while let Some(entry) = dir.next().await {
+                    let entry = entry.map_err(|e| e.to_string())?;
+                    let entry_path = entry.path.replace("\\", "/");
+                    //println!("entry_path:{}", &entry_path);
+                    set_files_permission_impl(client, vec![entry_path], permission, false).await?;
+                }
             }
         }
+        Ok(true)
     }
-    Ok(true)
-   }.boxed()
+    .boxed()
 }

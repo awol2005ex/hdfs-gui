@@ -24,8 +24,10 @@ pub fn run() {
             commands::hdfs_file::delete_hdfs_files,
             //新建目录
             commands::hdfs_file::create_hdfs_dir,
-            //获取预览内存
+            //获取预览内容
             commands::hdfs_file::get_hdfs_file_content_preview,
+            //获取内容
+            commands::hdfs_file::get_hdfs_file_content,
             //下载文件
             commands::hdfs_file::download_file,
             //删除hdfs文件(跳过垃圾箱)
@@ -34,6 +36,9 @@ pub fn run() {
             commands::hdfs_file::create_hdfs_empty_file,
             //设置权限
             commands::hdfs_file::set_hdfs_files_permissions,
+
+            //写入文本
+            commands::hdfs_file::write_text_hdfs_file,
             
         ])
         .run(tauri::generate_context!())

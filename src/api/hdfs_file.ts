@@ -13,6 +13,18 @@ export interface HdfsFile {
   length: number;
   [key: string]: string|number|Boolean;
 }
+//获取文件预览二进制内容
+export interface HdfsFileContentPreview {
+  
+  length: number;
+  content: string;
+}
+export interface HdfsFileContent {
+  
+  length: number;
+  content: string;
+}
+
 
 //获取HDFS文件列表
 export const getHdfsFileList = async (id: number, parent_path: string) => {
@@ -30,6 +42,16 @@ export const uploadHdfsFile = async (id: number, parent_path: string ,local_file
     id: id,
     parentPath: parent_path,
     localFilePath: local_file_path,
+  });
+  return result;
+};
+//写入文本到文件
+export const writeTextToHdfsFile = async (id: number, file_path: string ,content: string) => {
+  
+  const result: Boolean = await invoke("write_text_hdfs_file", {
+    id: id,
+    filePath: file_path,
+    content: content,
   });
   return result;
 };
@@ -87,13 +109,20 @@ export const createHdfsEmptyFile = async (id: number, parent_path: string, file_
 
 //查看文件预览内容
 export const get_file_preview_content = async (id: number, file_path : string) => {
-  const result: string = await invoke("get_hdfs_file_content_preview", {
+  const result: HdfsFileContentPreview = await invoke("get_hdfs_file_content_preview", {
     id: id,
     filePath: file_path,
   });
   return result;
 }
-
+//查看文件预览内容
+export const get_file_content = async (id: number, file_path : string) => {
+  const result: HdfsFileContent = await invoke("get_hdfs_file_content", {
+    id: id,
+    filePath: file_path,
+  });
+  return result;
+}
 
 //下载文件
 export const download_file = async (id: number, source_file_path : string, target_file_parent_path : string) => {

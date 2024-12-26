@@ -55,8 +55,15 @@
       </el-header>
       <el-main>
         <div v-if="mode == 'byte_preview'">
-          <p>Preview File Bytes Content</p>
+          
           <HdfsByteFileView
+            :hdfsConfigId="parseInt(route.params.id[0])"
+            :filePath="route.query.path?.toString()"
+          />
+        </div>
+        <div v-if="mode == 'text_edit'">
+          
+          <HdfsTextFileEdit
             :hdfsConfigId="parseInt(route.params.id[0])"
             :filePath="route.query.path?.toString()"
           />
@@ -67,11 +74,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { Back, HomeFilled, Download } from "@element-plus/icons-vue";
 
 import HdfsByteFileView from "../components/HdfsByteFileView.vue";
+import HdfsTextFileEdit from "../components/HdfsTextFileEdit.vue";
 import { download_file } from "../api/hdfs_file";
 //选择文件
 import { open } from "@tauri-apps/plugin-dialog";
@@ -80,7 +88,14 @@ import { ElMessage,ElLoading  } from "element-plus";
 const router = useRouter();
 const route = useRoute();
 
+
+
 const mode = ref("byte_preview");
+if(route.query.mode){
+     mode.value =route.query.mode.toString() ;
+} else{
+     mode.value = "byte_preview";
+}
 //返回首页
 const backToHome = () => {
   router.push("/");
@@ -146,6 +161,14 @@ const DownloadFile = async () => {
     loadingInstance1.close()
   }
 };
+
+watch(route, (to, from) => {
+  if(route.query.mode){
+     mode.value =route.query.mode.toString() ;
+  } else{
+     mode.value = "byte_preview";
+  }
+})
 </script>
 
 <style scoped></style>

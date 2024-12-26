@@ -1,22 +1,10 @@
 <template>
   <el-container>
     <el-header height="40">
-      <p>
-        <span style="float: left">Preview File Bytes Content</span>
-
-        <el-button-group
-          style="float: left; margin-left: 20px"
-          v-if="fileSize < 5 * 1024 * 1024"
-        >
-          <el-button
-            type="primary"
-            :icon="Edit"
-            circle
-            @click="EditTextFile"
-            title="Edit By Text Editor"
-          />
-        </el-button-group>
-      </p>
+      <el-button-group style="float: left; margin-left: 20px">
+        <el-button type="primary" @click="saveFile">Save</el-button>
+        <el-button @click="router.go(-1)">Back</el-button>
+      </el-button-group>
     </el-header>
     <el-main>
       <Codemirror
@@ -24,7 +12,7 @@
         :style="codeStyle"
         :extensions="extensions"
         v-bind="$attrs"
-        :disabled="true"
+        :disabled="false"
         @ready="handleReady"
         @change="onChange"
         @focus="onFocus"
@@ -40,12 +28,11 @@ import type { CSSProperties } from "vue";
 import { Codemirror } from "vue-codemirror";
 import { vue } from "@codemirror/lang-vue";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { get_file_preview_content } from "../api/hdfs_file.ts";
-import { ElMessage } from "element-plus";
-import { Edit } from "@element-plus/icons-vue";
+import { get_file_content, writeTextToHdfsFile } from "../api/hdfs_file.ts";
+import { ElMessage, ElLoading } from "element-plus";
+
 import { useRouter, useRoute } from "vue-router";
 const router = useRouter();
-const route = useRoute();
 
 interface Props {
   codeStyle?: CSSProperties; // 代码样式
@@ -94,15 +81,16 @@ function onBlur(viewUpdate: any) {
 const fileSize = ref(0);
 
 const reloadFile = async () => {
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
   try {
     if (props.hdfsConfigId > 0 && props.filePath != "") {
-      const previewResult = await get_file_preview_content(
+      const result = await get_file_content(
         props.hdfsConfigId as number,
         props.filePath as string
       );
 
-      codeValue.value = previewResult.content;
-      fileSize.value = previewResult.length;
+      codeValue.value = result.content;
+      fileSize.value = result.length;
     }
   } catch (error: any) {
     ElMessage({
@@ -111,6 +99,7 @@ const reloadFile = async () => {
       type: "error",
     });
   }
+  loadingInstance1.close();
 };
 watch(
   () => props.hdfsConfigId,
@@ -120,14 +109,37 @@ watch(
 );
 reloadFile();
 
-const EditTextFile = () => {
-  router.push({
-    path: "/HdfsFileView/" + route.params.id,
-    query: {
-      path: props.filePath,
-      mode: "text_edit",
-    },
-  });
+const saveFile = async () => {
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
+  try {
+    if (props.hdfsConfigId > 0 && props.filePath != "") {
+      const result = await writeTextToHdfsFile(
+        props.hdfsConfigId as number,
+        props.filePath as string,
+        codeValue.value
+      );
+      if (result) {
+        ElMessage({
+          showClose: true,
+          message: "Save file success",
+          type: "success",
+        });
+      } else {
+        ElMessage({
+          showClose: true,
+          message: "Save file failed",
+          type: "error",
+        });
+      }
+    }
+  } catch (error: any) {
+    ElMessage({
+      showClose: true,
+      message: error.toString(),
+      type: "error",
+    });
+  }
+  loadingInstance1.close();
 };
 </script>
 <style lang="less" scoped>
