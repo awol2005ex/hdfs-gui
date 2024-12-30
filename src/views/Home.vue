@@ -81,7 +81,8 @@ import {
   getHdfsConfigList,
   saveHdfsConfig,
   getHdfsConfig,
-  deleteHdfsConfig
+  deleteHdfsConfig,
+  initConnection
 } from "../api/hdfs_config.ts";
 import HdfsConfigForm from "../components/HdfsConfigForm.vue";
 import {
@@ -170,7 +171,10 @@ const removeHdfsConfig = (id: number) => {
     });
 };
 //连接到HDFS
-const connectToHdfs = (id: number) => {
+const connectToHdfs = async (id: number) => {
+  //初始化连接
+  await initConnection(id);
+  //进入页面
   router.push("/HdfsFolderView/" + id);
 };
 </script>

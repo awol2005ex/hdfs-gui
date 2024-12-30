@@ -76,9 +76,34 @@ pub async fn get_hdfs_file_acl_list(id: i64, file_path: String) -> Result<HdfsAc
     Ok(hdfs_acls)
 }
 
-//上传文件
+//添加Acl
 #[tauri::command]
 pub async fn add_acl(
+    id: i64,
+    file_path: String,
+    rtype: String,
+    scope: String,
+    permissions: String,
+    name: Option<String>,
+) -> Result<bool, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+
+    println!("add_acl:file_path:{}, rtype:{}, scope:{}, permissions:{}, name:{}", &file_path, &rtype, &scope, &permissions, &name.to_owned().unwrap_or_default());
+    client
+        .modify_acl_entries(
+            &file_path,
+            vec![AclEntry::new(rtype, scope, permissions, name)],
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+
+    return Ok(true);
+}
+
+
+//删除Acl
+#[tauri::command]
+pub async fn delete_acl(
     id: i64,
     file_path: String,
     rtype: String,

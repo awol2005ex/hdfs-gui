@@ -27,3 +27,9 @@ export const getHdfsConfig = async (id: number) => {
 export const deleteHdfsConfig = async (id: number) => {
   await invoke("delete_hdfs_config", { id: id });
 };
+
+
+//初始化连接
+export const initConnection = async (id: number) => {
+  await invoke("init_connection", { id: id });
+};

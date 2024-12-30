@@ -32,7 +32,7 @@ export const addHdfsFileAcl = async (
   rtype: string,
   scope: string,
   permissions: string,
-  name: string
+  name?: string|null|undefined
 ) => {
   const result: HdfsAcl = await invoke("add_acl", {
     id: id,

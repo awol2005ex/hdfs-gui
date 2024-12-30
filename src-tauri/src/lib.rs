@@ -48,6 +48,8 @@ pub fn run() {
             get_hdfs_file_acl_list,
             //添加acl
             add_acl,
+            //初始化连接
+            init_connection,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

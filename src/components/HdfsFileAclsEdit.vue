@@ -95,7 +95,7 @@ const props = withDefaults(defineProps<Props>(), {
 interface AddAcl {
   rtype: string;
   scope: string;
-  name: string;
+  name?: string|null|undefined;
   permissions: string;
 }
 const addacls: Reactive<AddAcl> = reactive({
@@ -116,7 +116,7 @@ const addAclFunc = async () => {
         addacls.rtype,
         addacls.scope,
         addacls.permissions,
-        addacls.name,
+        addacls.name==""?null:addacls.name,
       );
       if (b) {
         ElMessage({

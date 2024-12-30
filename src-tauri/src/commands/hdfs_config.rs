@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::db::db_init::DB_POOL;
-
+use std::process::Command;
 //hdfs配置
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Clone)]
 pub struct HdfsConfig {
@@ -76,6 +76,40 @@ pub async fn delete_hdfs_config(id: i64) -> Result<(), String> {
     } else {
         return Err("Database connection pool is not initialized".to_owned());
     }
+    Ok(())
+}
+
+//初始化kerberos
+#[tauri::command]
+pub async fn init_connection(id: i64) -> Result<(), String> {
+    crate::db::db_init::init_db()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let hc = get_one_hdfs_config(id).await.map_err(|e| e.to_string())?;
+    println!(" Hdfs Config: {:?}", &hc);
+    if let Ok(config_json) = serde_json::from_str::<serde_json::Value>(&hc.hdfs_config) {
+        if let Some(principal) = config_json.get("dfs.namenode.kerberos.principal") {
+            if let Some(keytab) = config_json.get("dfs.namenode.keytab.file") {
+                let principal_s = principal.as_str().unwrap_or_default();
+                let keytab_s = keytab.as_str().unwrap_or_default();
+                if cfg!(target_os = "windows") {
+                    std::env::set_var("KRB5CCNAME", "./hdfs_gui_ccache");
+                    let s = format!("kinit -kt {} {}", keytab_s, principal_s);
+                    println!("kinit command: {}", &s);
+                    let o = Command::new("cmd").arg("/c").arg(&s).output().map_err(|e| e.to_string())?;
+                    println!("kinit output: {:?}", &o);
+                } else {
+                    std::env::set_var("KRB5CCNAME", "./hdfs_gui_ccache");
+                    let s = format!("kinit -kt {} {}", keytab_s, principal_s);
+                    println!("kinit command: {}", &s);
+                    let o = Command::new("sh").arg("-c").arg(&s).output().map_err(|e| e.to_string())?;
+                    println!("kinit output: {:?}", &o);
+                }
+            }
+        }
+    }
+
     Ok(())
 }
 
