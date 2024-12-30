@@ -15,15 +15,29 @@
       }}</el-descriptions-item>
       <el-descriptions-item label="Entries">
         <el-button-group style="float: left; margin-left: 20px">
-        <el-button type="primary" @click="AddAclDialogVisible = true"
-          >Add Acl</el-button
-        >
+          <el-button type="primary" @click="AddAclDialogVisible = true"
+            >Add Acl</el-button
+          >
+          <el-button type="warning" @click="deleteHdfsFileDefaultAclFunc"
+            >Delete Default</el-button
+          >
+          <el-button type="warning" @click="deleteHdfsFileAllAclFunc"
+            >Delete All</el-button
+          >
+          
         </el-button-group>
         <el-table :data="acls.entries" border>
           <el-table-column prop="rtype" label="Type" width="180" />
           <el-table-column prop="scope" label="scope" width="180" />
           <el-table-column prop="name" label="Name" width="180" />
           <el-table-column prop="permissions" label="Permission" width="180" />
+          <el-table-column label="" width="auto">
+            <template #default="scope">
+              <el-button type="danger" @click="deleteAcl(scope.row)"
+                >Delete</el-button
+              >
+            </template>
+          </el-table-column>
         </el-table>
       </el-descriptions-item>
     </el-descriptions>
@@ -55,7 +69,6 @@
         label="Permission"
         v-if="addacls.rtype != 'mask' && addacls.rtype != 'other'"
       >
-
         <el-select v-model="addacls.permissions" placeholder="Select">
           <el-option label="---" value="---" />
           <el-option label="--x" value="--x" />
@@ -79,7 +92,15 @@
 
 <script setup lang="ts">
 import { reactive, Reactive, ref, watch } from "vue";
-import { addHdfsFileAcl, getHdfsFileAclList, HdfsAcl } from "../api/hdfs_acls";
+import {
+  addHdfsFileAcl,
+  getHdfsFileAclList,
+  HdfsAcl,
+  deleteHdfsFileAcl,
+  HdfsAclEntry,
+  deleteHdfsFileDefaultAcl,
+  deleteHdfsFileAllAcl,
+} from "../api/hdfs_acls";
 import { HdfsFile } from "../api/hdfs_file";
 import { ElMessage, ElLoading } from "element-plus";
 
@@ -95,7 +116,7 @@ const props = withDefaults(defineProps<Props>(), {
 interface AddAcl {
   rtype: string;
   scope: string;
-  name?: string|null|undefined;
+  name?: string | null | undefined;
   permissions: string;
 }
 const addacls: Reactive<AddAcl> = reactive({
@@ -116,7 +137,7 @@ const addAclFunc = async () => {
         addacls.rtype,
         addacls.scope,
         addacls.permissions,
-        addacls.name==""?null:addacls.name,
+        addacls.name == "" ? null : addacls.name
       );
       if (b) {
         ElMessage({
@@ -133,8 +154,8 @@ const addAclFunc = async () => {
       }
 
       loadingInstance1.close();
-      AddAclDialogVisible.value = false
-      reloadFileAcls()
+      AddAclDialogVisible.value = false;
+      reloadFileAcls();
     } catch (error: any) {
       ElMessage({
         showClose: true,
@@ -211,6 +232,105 @@ function convertPermissionsToSymbolic(permissionNumber: number, row: HdfsFile) {
   if (!row.isdir) return "-" + permissions;
   else return "d" + permissions;
 }
+
+const deleteAcl = async (acl: HdfsAclEntry) => {
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
+  try {
+    const b = await deleteHdfsFileAcl(
+      props.hdfsConfigId,
+      props.filePath,
+      acl.rtype,
+      acl.scope,
+      acl.permissions,
+      acl.name==""?null:acl.name,
+    );
+    if (b) {
+      ElMessage({
+        showClose: true,
+        message: "Delete Success",
+        type: "success",
+      });
+      reloadFileAcls();
+    } else {
+      ElMessage({
+        showClose: true,
+        message: "Delete Failed",
+        type: "error",
+      });
+    }
+  } catch (error: any) {
+    ElMessage({
+      showClose: true,
+      message: error.toString(),
+      type: "error",
+    });
+  }
+
+  loadingInstance1.close();
+};
+
+const deleteHdfsFileDefaultAclFunc = async () => {
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
+  try {
+    const b = await deleteHdfsFileDefaultAcl(
+      props.hdfsConfigId,
+      props.filePath
+    );
+    if (b) {
+      ElMessage({
+        showClose: true,
+        message: "Delete Success",
+        type: "success",
+      });
+      reloadFileAcls();
+    } else {
+      ElMessage({
+        showClose: true,
+        message: "Delete Failed",
+        type: "error",
+      });
+    }
+  } catch (error: any) {
+    ElMessage({
+      showClose: true,
+      message: error.toString(),
+      type: "error",
+    });
+  }
+  loadingInstance1.close();
+};
+
+
+const deleteHdfsFileAllAclFunc = async () => {
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
+  try {
+    const b = await deleteHdfsFileAllAcl(
+      props.hdfsConfigId,
+      props.filePath
+    );
+    if (b) {
+      ElMessage({
+        showClose: true,
+        message: "Delete Success",
+        type: "success",
+      });
+      reloadFileAcls();
+    } else {
+      ElMessage({
+        showClose: true,
+        message: "Delete Failed",
+        type: "error",
+      });
+    }
+  } catch (error: any) {
+    ElMessage({
+      showClose: true,
+      message: error.toString(),
+      type: "error",
+    });
+  }
+  loadingInstance1.close();
+};
 
 watch(
   () => props.filePath,

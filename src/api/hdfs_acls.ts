@@ -44,3 +44,45 @@ export const addHdfsFileAcl = async (
   });
   return result;
 };
+//删除HDFS文件acl
+export const deleteHdfsFileAcl = async (
+  id: number,
+  file_path: string,
+  rtype: string,
+  scope: string,
+  permissions: string,
+  name?: string|null|undefined
+) => {
+  return await invoke("delete_acl", {
+    id: id,
+    filePath: file_path,
+    rtype: rtype,
+    scope: scope,
+    permissions: permissions,
+    name: name,
+  });
+};
+
+//删除HDFS文件默认acl
+export const deleteHdfsFileDefaultAcl = async (
+  id: number,
+  file_path: string,
+) => {
+  const result = await invoke("delete_default_acl", {
+    id: id,
+    filePath: file_path,
+  });
+  return result;
+};
+
+//删除HDFS文件全部acl
+export const deleteHdfsFileAllAcl = async (
+  id: number,
+  file_path: string,
+) => {
+  const result = await invoke("delete_all_acl", {
+    id: id,
+    filePath: file_path,
+  });
+  return result;
+};

@@ -113,11 +113,49 @@ pub async fn delete_acl(
 ) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
 
-    println!("add_acl:file_path:{}, rtype:{}, scope:{}, permissions:{}, name:{}", &file_path, &rtype, &scope, &permissions, &name.to_owned().unwrap_or_default());
+    println!("remove_acl:file_path:{}, rtype:{}, scope:{}, permissions:{}, name:{}", &file_path, &rtype, &scope, &permissions, &name.to_owned().unwrap_or_default());
     client
-        .modify_acl_entries(
+        .remove_acl_entries(
             &file_path,
             vec![AclEntry::new(rtype, scope, permissions, name)],
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+
+    return Ok(true);
+}
+
+//删除Acl
+#[tauri::command]
+pub async fn delete_default_acl(
+    id: i64,
+    file_path: String
+) -> Result<bool, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+
+    println!("delete_default_acl:file_path:{}", &file_path);
+    client
+        .remove_default_acl(
+            &file_path
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+
+    return Ok(true);
+}
+
+//删除全部Acl
+#[tauri::command]
+pub async fn delete_all_acl(
+    id: i64,
+    file_path: String
+) -> Result<bool, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+
+    println!("delete_all_acl:file_path:{}", &file_path);
+    client
+        .remove_acl(
+            &file_path
         )
         .await
         .map_err(|e| e.to_string())?;
