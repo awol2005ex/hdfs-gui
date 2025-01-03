@@ -94,13 +94,21 @@ pub async fn init_connection(id: i64) -> Result<(), String> {
                 let principal_s = principal.as_str().unwrap_or_default();
                 let keytab_s = keytab.as_str().unwrap_or_default();
                 if cfg!(target_os = "windows") {
-                    std::env::set_var("KRB5CCNAME", "./hdfs_gui_ccache");
+                    let current_dir=std::env::current_dir().map_err(|e| e.to_string())?;
+                    let cache_file_path=format!("{}/hdfs_gui_ccache",current_dir.to_str().unwrap_or_default());
+                    std::env::set_var("KRB5CCNAME", cache_file_path.clone());
                     let s = format!("kinit -kt {} {}", keytab_s, principal_s);
                     println!("kinit command: {}", &s);
                     let o = Command::new("cmd").arg("/c").arg(&s).output().map_err(|e| e.to_string())?;
                     println!("kinit output: {:?}", &o);
+
+                    if !(std::fs::exists(cache_file_path).map_err(|e| e.to_string())?) {
+                        return Err("Kerberos authentication failed".to_owned());
+                    }
+
+
                 } else {
-                    std::env::set_var("KRB5CCNAME", "./hdfs_gui_ccache");
+                    std::env::set_var("KRB5CCNAME", "/tmp/hdfs_gui_ccache");
                     let s = format!("kinit -kt {} {}", keytab_s, principal_s);
                     println!("kinit command: {}", &s);
                     let o = Command::new("sh").arg("-c").arg(&s).output().map_err(|e| e.to_string())?;

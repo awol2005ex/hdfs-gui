@@ -75,14 +75,14 @@
 </template>
 
 <script setup lang="ts">
-import {  Ref, ref, nextTick } from "vue";
+import { Ref, ref, nextTick } from "vue";
 import {
   HdfsConfig,
   getHdfsConfigList,
   saveHdfsConfig,
   getHdfsConfig,
   deleteHdfsConfig,
-  initConnection
+  initConnection,
 } from "../api/hdfs_config.ts";
 import HdfsConfigForm from "../components/HdfsConfigForm.vue";
 import {
@@ -172,10 +172,18 @@ const removeHdfsConfig = (id: number) => {
 };
 //连接到HDFS
 const connectToHdfs = async (id: number) => {
-  //初始化连接
-  await initConnection(id);
-  //进入页面
-  router.push("/HdfsFolderView/" + id);
+  try {
+    //初始化连接
+    await initConnection(id);
+    //进入页面
+    router.push("/HdfsFolderView/" + id);
+  } catch (err:any) {
+    ElMessage({
+      showClose: true,
+      message: err.toString(),
+      type: "error",
+    });
+  }
 };
 </script>
 
