@@ -55,15 +55,19 @@
       </el-header>
       <el-main>
         <div v-if="mode == 'byte_preview'">
-          
           <HdfsByteFileView
             :hdfsConfigId="parseInt(route.params.id[0])"
             :filePath="route.query.path?.toString()"
           />
         </div>
         <div v-if="mode == 'text_edit'">
-          
           <HdfsTextFileEdit
+            :hdfsConfigId="parseInt(route.params.id[0])"
+            :filePath="route.query.path?.toString()"
+          />
+        </div>
+        <div v-if="mode == 'orc'">
+          <HdfsOrcFileView
             :hdfsConfigId="parseInt(route.params.id[0])"
             :filePath="route.query.path?.toString()"
           />
@@ -80,21 +84,20 @@ import { Back, HomeFilled, Download } from "@element-plus/icons-vue";
 
 import HdfsByteFileView from "../components/HdfsByteFileView.vue";
 import HdfsTextFileEdit from "../components/HdfsTextFileEdit.vue";
+import HdfsOrcFileView from "../components/HdfsOrcFileView.vue";
 import { download_file } from "../api/hdfs_file";
 //选择文件
 import { open } from "@tauri-apps/plugin-dialog";
-import { ElMessage,ElLoading  } from "element-plus";
+import { ElMessage, ElLoading } from "element-plus";
 
 const router = useRouter();
 const route = useRoute();
 
-
-
 const mode = ref("byte_preview");
-if(route.query.mode){
-     mode.value =route.query.mode.toString() ;
-} else{
-     mode.value = "byte_preview";
+if (route.query.mode) {
+  mode.value = route.query.mode.toString();
+} else {
+  mode.value = "byte_preview";
 }
 //返回首页
 const backToHome = () => {
@@ -131,7 +134,7 @@ const DownloadFile = async () => {
     directory: true,
   });
 
-  const loadingInstance1 = ElLoading.service({ fullscreen: true })
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
   try {
     const b = await download_file(
       parseInt(route.params.id[0]),
@@ -151,24 +154,24 @@ const DownloadFile = async () => {
         type: "error",
       });
     }
-    loadingInstance1.close()
+    loadingInstance1.close();
   } catch (error: any) {
     ElMessage({
       showClose: true,
       message: error.toString(),
       type: "error",
     });
-    loadingInstance1.close()
+    loadingInstance1.close();
   }
 };
 
 watch(route, () => {
-  if(route.query.mode){
-     mode.value =route.query.mode.toString() ;
-  } else{
-     mode.value = "byte_preview";
+  if (route.query.mode) {
+    mode.value = route.query.mode.toString();
+  } else {
+    mode.value = "byte_preview";
   }
-})
+});
 </script>
 
 <style scoped></style>

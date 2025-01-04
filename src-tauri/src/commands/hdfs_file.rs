@@ -290,6 +290,8 @@ pub struct HdfsFileContentPreview {
     pub length: usize,
     //预览内容
     pub content: String,
+    //是否orc类型文件
+    pub isorc:bool,
 }
 #[tauri::command]
 pub async fn get_hdfs_file_content_preview(
@@ -307,9 +309,13 @@ pub async fn get_hdfs_file_content_preview(
         .read(1 * 1024 * 1024)
         .await
         .map_err(|e| e.to_string())?;
+    //判断文件是否ORC
+    let content=String::from_utf8_lossy(buf.to_vec().as_slice()).to_string();
+    let isorc=content.starts_with("ORC");
     Ok(HdfsFileContentPreview {
-        content: String::from_utf8_lossy(buf.to_vec().as_slice()).to_string(),
+        content:content ,
         length: file_status.length as usize,
+        isorc:isorc,
     })
 }
 
@@ -322,9 +328,9 @@ pub struct HdfsFileContent {
 }
 #[tauri::command]
 pub async fn get_hdfs_file_content(
-    id: i64,
+    id: i64, 
     file_path: String,
-) -> Result<HdfsFileContentPreview, String> {
+) -> Result<HdfsFileContent, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
     let file_status = client
         .get_file_info(&file_path)
@@ -336,7 +342,7 @@ pub async fn get_hdfs_file_content(
         .read(file_status.length as usize)
         .await
         .map_err(|e| e.to_string())?;
-    Ok(HdfsFileContentPreview {
+    Ok(HdfsFileContent {
         content: String::from_utf8_lossy(buf.to_vec().as_slice()).to_string(),
         length: file_status.length as usize,
     })

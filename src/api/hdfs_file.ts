@@ -17,6 +17,7 @@ export interface HdfsFile {
 export interface HdfsFileContentPreview {
   length: number;
   content: string;
+  isorc: Boolean;
 }
 export interface HdfsFileContent {
   length: number;

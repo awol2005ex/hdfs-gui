@@ -4,3 +4,5 @@ pub mod hdfs_config;
 pub mod hdfs_file;
 //hdfs acls操作
 pub mod hdfs_acls;
+//hdfs orc文件操作
+pub mod hdfs_orc;

@@ -1,4 +1,4 @@
-use commands::{hdfs_acls::*, hdfs_config::*, hdfs_file::*};
+use commands::{hdfs_acls::*, hdfs_config::*, hdfs_file::*, hdfs_orc::*};
 
 mod commands;
 mod db;
@@ -56,6 +56,10 @@ pub fn run() {
             delete_default_acl,
             //删除全部
             delete_all_acl,
+            //获取orc文件字段列表
+            get_hdfs_orc_file_field_list,
+            //获取orc文件行数
+            get_hdfs_orc_file_rows_count,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

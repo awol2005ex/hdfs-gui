@@ -4,17 +4,22 @@
       <p>
         <span style="float: left">Preview File Bytes Content</span>
 
-        <el-button-group
+        <el-button-group class="ml-4"
           style="float: left; margin-left: 20px"
-          v-if="fileSize < 5 * 1024 * 1024"
+          
         >
-          <el-button
+          <el-button v-if="fileSize < 5 * 1024 * 1024"
             type="primary"
             :icon="Edit"
             circle
             @click="EditTextFile"
             title="Edit By Text Editor"
           />
+          <el-button v-if="isOrc"
+            type="primary"
+            @click="OrcView"
+            title="Orc View"
+          >Orc View</el-button>
         </el-button-group>
       </p>
     </el-header>
@@ -36,7 +41,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import type { CSSProperties } from "vue";
+import type { CSSProperties, Ref } from "vue";
 import { Codemirror } from "vue-codemirror";
 import { vue } from "@codemirror/lang-vue";
 import { oneDark } from "@codemirror/theme-one-dark";
@@ -92,6 +97,8 @@ function onBlur(viewUpdate: any) {
 }
 //文件大小
 const fileSize = ref(0);
+//是否orc
+const isOrc :Ref<Boolean, Boolean>= ref(false);
 
 const reloadFile = async () => {
   try {
@@ -103,6 +110,7 @@ const reloadFile = async () => {
 
       codeValue.value = previewResult.content;
       fileSize.value = previewResult.length;
+      isOrc.value = previewResult.isorc;
     }
   } catch (error: any) {
     ElMessage({
@@ -119,13 +127,23 @@ watch(
   }
 );
 reloadFile();
-
+//文本编辑
 const EditTextFile = () => {
   router.push({
     path: "/HdfsFileView/" + route.params.id,
     query: {
       path: props.filePath,
       mode: "text_edit",
+    },
+  });
+};
+//orc文件查看
+const OrcView = () => {
+  router.push({
+    path: "/HdfsFileView/" + route.params.id,
+    query: {
+      path: props.filePath,
+      mode: "orc",
     },
   });
 };
