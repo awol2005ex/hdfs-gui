@@ -18,7 +18,11 @@ use orc_rust::{
     ArrowReaderBuilder, ArrowStreamReader,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap,  sync::Arc};
+use std::{collections::HashMap, sync::Arc};
+
+use arrow::csv;
+use std::fs::File;
+
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct OrcField {
     pub name: String,
@@ -482,4 +486,27 @@ pub async fn read_orc_file_data_by_page(
         None => {}
     }
     return Ok(result_data);
+}
+
+
+//导出orc文件数据到csv文件
+#[tauri::command]
+pub async fn export_orc_file_date_to_csv(id: i64,
+    file_path: String, target_csv_file_path: &str) -> Result<(), String> {
+
+        let mut arrow_reader: ArrowStreamReader<HdfsOrcFileReader> =
+        get_orc_reader(id, file_path, 10000).await?;
+
+    loop {
+    
+        if let Some( Ok( batch)) =arrow_reader.next().await{
+            let csv_file = File::create(target_csv_file_path).map_err(|e| format!("Failed to create file: {}", e))?;
+            let mut writer = csv::Writer::new(csv_file);
+            
+            let _ = writer.write(&batch).map_err(|e| format!("Failed to write file: {}", e))?;
+        } else {
+            break;
+        }
+    }
+    Ok(())
 }

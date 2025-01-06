@@ -47,3 +47,19 @@ export interface DataRow {
   });
   return result;
 }; 
+
+
+export const export_orc_file_date_to_csv = async (
+  id: number,
+  filePath: string,
+  target_csv_file_path: string,
+) => {
+  const result: Array<DataRow> = await invoke("export_orc_file_date_to_csv", {
+    id: id,
+    filePath: filePath,
+    targetCsvFilePath: target_csv_file_path
+  });
+  return result;
+}; 
+
+

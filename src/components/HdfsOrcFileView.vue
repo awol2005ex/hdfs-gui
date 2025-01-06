@@ -4,6 +4,8 @@
       <el-button-group style="float: left; margin-left: 20px">
         <el-button @click="router.go(-1)">Back</el-button>
         <el-button @click="openStruct">show struct</el-button>
+        <el-button @click="exportCsv">export to csv</el-button>
+        
       </el-button-group>
     </el-header>
     <el-main>
@@ -58,8 +60,10 @@ import {
   OrcField,
   read_orc_file_data_by_page,
   DataRow,
+  export_orc_file_date_to_csv,
 } from "../api/hdfs_orc";
 import { ElLoading, ElMessage } from "element-plus";
+import { save } from "@tauri-apps/plugin-dialog";
 const router = useRouter();
 
 interface Props {
@@ -160,6 +164,28 @@ const read_orc_file_data_by_page_func = async (
     });
   }
   loadingInstance1.close();
+};
+
+
+
+const exportCsv = async () => {
+  const selected = await save({
+    filters: [
+      {
+        name: "Csv Files",
+        extensions: ["csv"],
+      },
+    ],
+  });
+  if (selected) {
+    const loadingInstance1 = ElLoading.service({ fullscreen: true });
+    await export_orc_file_date_to_csv(
+      props.hdfsConfigId as number,
+      props.filePath as string,
+      selected,
+    );
+    loadingInstance1.close();
+  }
 };
 </script>
 <style lang="less" scoped></style>
