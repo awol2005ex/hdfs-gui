@@ -176,6 +176,7 @@ const exportCsv = async () => {
         extensions: ["csv"],
       },
     ],
+    defaultPath: props.filePath.replace("\\","/").split("/").pop()+".csv",
   });
   if (selected) {
     const loadingInstance1 = ElLoading.service({ fullscreen: true });
