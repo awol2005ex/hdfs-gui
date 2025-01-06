@@ -21,6 +21,7 @@
 ## Key Features
 
 * Hdfs Files list, read and display , write , upload ,set permissions , delete files and directories , set file acls.
+* Hdfs Orc viewer ,show struct ,export to csv.
 Support
 * Cross platform
   - Windows, macOS and Linux ready.
@@ -63,7 +64,7 @@ config: {
 
 ## Download
 
-You can [download](https://github.com/awol2005ex/hdfs-gui/releases/tag/v0.1.0) the latest installable version of hdfs-gui for Windows （install MT kerberos first and set PATH to the path of kinit）
+You can [download](https://github.com/awol2005ex/hdfs-gui/releases/tag/v0.2.0) the latest installable version of hdfs-gui for Windows （install MT kerberos first and set PATH to the path of kinit）
 
 
 
