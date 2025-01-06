@@ -60,6 +60,8 @@ pub fn run() {
             get_hdfs_orc_file_field_list,
             //获取orc文件行数
             get_hdfs_orc_file_rows_count,
+            //分页读取orc文件数据
+            read_orc_file_data_by_page,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

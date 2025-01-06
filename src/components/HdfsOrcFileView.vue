@@ -43,7 +43,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
-import { get_hdfs_orc_file_field_list, get_hdfs_orc_file_rows_count, OrcField } from "../api/hdfs_orc";
+import { get_hdfs_orc_file_field_list, get_hdfs_orc_file_rows_count, OrcField,read_orc_file_data_by_page ,DataRow} from "../api/hdfs_orc";
 const router = useRouter();
 
 interface Props {
@@ -57,7 +57,7 @@ const props = withDefaults(defineProps<Props>(), {
 //字段列表
 const fields = ref<OrcField[]>([]);
 //数据
-const data = ref([]);
+const data = ref<DataRow[]>([]);
 //每页条数
 const pageSize = ref(10);
 //总条数
@@ -68,7 +68,7 @@ const currentPage = ref(1);
 const handleCurrentChange = async (val: number) => {
   currentPage.value = val;
 
-  await read_orc_file_data_by_page(
+  await read_orc_file_data_by_page_func(
     props.hdfsConfigId as number,
     props.filePath as string,
     pageSize.value,
@@ -77,7 +77,7 @@ const handleCurrentChange = async (val: number) => {
 };
 const handleSizeChange = async (val: number) => {
   pageSize.value = val;
-  await read_orc_file_data_by_page(
+  await read_orc_file_data_by_page_func(
     props.hdfsConfigId as number,
     props.filePath as string,
     pageSize.value,
@@ -99,7 +99,7 @@ const reloadFile = async () => {
     props.filePath as string
   );
   //按页读取数据
-  await read_orc_file_data_by_page(
+  await read_orc_file_data_by_page_func(
     props.hdfsConfigId as number,
     props.filePath as string,
     pageSize.value,
@@ -117,11 +117,19 @@ watch(
 //重新加载文件
 reloadFile();
 //按页读取数据
-const read_orc_file_data_by_page = async (
+const read_orc_file_data_by_page_func = async (
   currentHdfsConfigId: number,
   readFilePath: string,
   readPageSize: number,
   readCurrentPage: number
-) => {};
+) => {
+  data.value = await read_orc_file_data_by_page(
+    currentHdfsConfigId,
+    readFilePath,
+    readPageSize,
+    readCurrentPage
+  );
+
+};
 </script>
 <style lang="less" scoped></style>

@@ -26,3 +26,24 @@ export const get_hdfs_orc_file_rows_count = async (
     });
     return result;
   };
+// 定义数据项的类型
+export interface DataRow {
+  [key: string]: any;
+}
+
+  
+//获取orc文件数据
+ export const read_orc_file_data_by_page = async (
+  id: number,
+  filePath: string,
+  pageSize: number,
+  page: number,
+) => {
+  const result: Array<DataRow> = await invoke("read_orc_file_data_by_page", {
+    id: id,
+    filePath: filePath,
+    pageNumber: page,
+    pageSize: pageSize,
+  });
+  return result;
+}; 
