@@ -4,22 +4,22 @@
       <p>
         <span style="float: left">Preview File Bytes Content</span>
 
-        <el-button-group class="ml-4"
-          style="float: left; margin-left: 20px"
-          
-        >
-          <el-button v-if="fileSize < 5 * 1024 * 1024"
+        <el-button-group class="ml-4" style="float: left; margin-left: 20px">
+          <el-button
+            v-if="fileSize < 5 * 1024 * 1024"
             type="primary"
             :icon="Edit"
             circle
             @click="EditTextFile"
             title="Edit By Text Editor"
           />
-          <el-button v-if="isOrc"
+          <el-button
+            v-if="isOrc"
             type="primary"
             @click="OrcView"
             title="Orc View"
-          >Orc View</el-button>
+            >Orc View</el-button
+          >
         </el-button-group>
       </p>
     </el-header>
@@ -98,7 +98,7 @@ function onBlur(viewUpdate: any) {
 //文件大小
 const fileSize = ref(0);
 //是否orc
-const isOrc :Ref<Boolean, Boolean>= ref(false);
+const isOrc: Ref<Boolean, Boolean> = ref(false);
 
 const reloadFile = async () => {
   try {
@@ -107,6 +107,17 @@ const reloadFile = async () => {
         props.hdfsConfigId as number,
         props.filePath as string
       );
+      //自动跳转到orc查看模式
+      if (previewResult.isorc) {
+        router.replace({
+          path: "/HdfsFileView/" + route.params.id,
+          query: {
+            path: props.filePath,
+            mode: "orc",
+          },
+        });
+        return;
+      }
 
       codeValue.value = previewResult.content;
       fileSize.value = previewResult.length;
