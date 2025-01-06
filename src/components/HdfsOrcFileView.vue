@@ -3,6 +3,7 @@
     <el-header height="40">
       <el-button-group style="float: left; margin-left: 20px">
         <el-button @click="router.go(-1)">Back</el-button>
+        <el-button @click="openStruct">show struct</el-button>
       </el-button-group>
     </el-header>
     <el-main>
@@ -20,12 +21,16 @@
           </template>
         </el-table-column>
         <el-table-column
-          v-for="(field, index) in fields"
+          v-for="(field, _index) in fields"
           :key="field.name"
           :prop="field.name"
           :label="field.name"
           width="auto"
-        ></el-table-column>
+        >
+          <template #header>
+            <span :title="field.type_name.toString()"> {{ field.name }}</span>
+          </template>
+        </el-table-column>
       </el-table>
       <el-pagination
         @current-change="handleCurrentChange"
@@ -38,12 +43,23 @@
       ></el-pagination>
     </el-main>
   </el-container>
+
+  <el-drawer v-model="strunctdrawer" title="Struct">
+    {{ orc_struct }}
+  </el-drawer>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
-import { get_hdfs_orc_file_field_list, get_hdfs_orc_file_rows_count, OrcField,read_orc_file_data_by_page ,DataRow} from "../api/hdfs_orc";
+import {
+  get_hdfs_orc_file_field_list,
+  get_hdfs_orc_file_rows_count,
+  OrcField,
+  read_orc_file_data_by_page,
+  DataRow,
+} from "../api/hdfs_orc";
+import { ElLoading, ElMessage } from "element-plus";
 const router = useRouter();
 
 interface Props {
@@ -64,7 +80,11 @@ const pageSize = ref(10);
 const total = ref(0);
 //当前页
 const currentPage = ref(1);
-
+const orc_struct = ref("");
+const strunctdrawer = ref(false);
+const openStruct = async () => {
+  strunctdrawer.value = !strunctdrawer.value;
+};
 const handleCurrentChange = async (val: number) => {
   currentPage.value = val;
 
@@ -87,11 +107,12 @@ const handleSizeChange = async (val: number) => {
 
 //重新加载文件
 const reloadFile = async () => {
-    //字段列表
+  //字段列表
   fields.value = await get_hdfs_orc_file_field_list(
     props.hdfsConfigId as number,
     props.filePath as string
   );
+  orc_struct.value= JSON.stringify(fields.value);
   //数据行数
 
   total.value = await get_hdfs_orc_file_rows_count(
@@ -123,13 +144,22 @@ const read_orc_file_data_by_page_func = async (
   readPageSize: number,
   readCurrentPage: number
 ) => {
-  data.value = await read_orc_file_data_by_page(
-    currentHdfsConfigId,
-    readFilePath,
-    readPageSize,
-    readCurrentPage
-  );
-
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
+  try {
+    data.value = await read_orc_file_data_by_page(
+      currentHdfsConfigId,
+      readFilePath,
+      readPageSize,
+      readCurrentPage
+    );
+  } catch (error: any) {
+    ElMessage({
+      showClose: true,
+      message: error.toString(),
+      type: "error",
+    });
+  }
+  loadingInstance1.close();
 };
 </script>
 <style lang="less" scoped></style>

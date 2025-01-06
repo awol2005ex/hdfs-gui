@@ -18,7 +18,7 @@ use orc_rust::{
     ArrowReaderBuilder, ArrowStreamReader,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fs::File, sync::Arc};
+use std::{collections::HashMap,  sync::Arc};
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct OrcField {
     pub name: String,
