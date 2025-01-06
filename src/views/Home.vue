@@ -35,7 +35,7 @@
                     type="primary"
                     :icon="Connection"
                     circle
-                    @click="connectToHdfs(item.id || 0)"
+                    @click="connectToHdfs(item.id || 0,item.name||'')"
                     title="Connect"
                   />
                 </td>
@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, ref, nextTick } from "vue";
+import { Ref, ref, nextTick, watch } from "vue";
 import {
   HdfsConfig,
   getHdfsConfigList,
@@ -91,10 +91,12 @@ import {
   Delete,
   Connection,
 } from "@element-plus/icons-vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
-const router = useRouter();
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
+const router = useRouter();
+const route = useRoute();
 //HDFS配置列表
 const hdfsConfigList: Ref<Array<HdfsConfig>> = ref([]);
 
@@ -171,13 +173,14 @@ const removeHdfsConfig = (id: number) => {
     });
 };
 //连接到HDFS
-const connectToHdfs = async (id: number) => {
+const connectToHdfs = async (id: number, name: string) => {
   try {
     //初始化连接
     await initConnection(id);
+    getCurrentWindow().setTitle("Hdfs Gui-[" + name + "]");
     //进入页面
-    router.push("/HdfsFolderView/" + id);
-  } catch (err:any) {
+    router.push("/HdfsFolderView/" + id );
+  } catch (err: any) {
     ElMessage({
       showClose: true,
       message: err.toString(),
@@ -185,6 +188,16 @@ const connectToHdfs = async (id: number) => {
     });
   }
 };
+
+// 监听路由变化
+watch(
+  () => route,
+  (newRoute, oldRoute) => {
+    console.log('Route changed:', newRoute, oldRoute);
+    getCurrentWindow().setTitle("Hdfs Gui");
+  },
+  { deep: true, immediate: true }
+);
 </script>
 
 <style scoped></style>
