@@ -187,7 +187,7 @@ pub async fn export_orc_file_date_to_csv(
         if let Some(Ok(batch)) = arrow_reader.next().await {
             let csv_file = File::create(target_csv_file_path)
                 .map_err(|e| format!("Failed to create file: {}", e))?;
-            let mut writer = csv::Writer::new(csv_file);
+            let mut writer =  csv::WriterBuilder::new().with_delimiter(b',').with_show_nested(true).build(csv_file);
 
             let _ = writer
                 .write(&batch)
