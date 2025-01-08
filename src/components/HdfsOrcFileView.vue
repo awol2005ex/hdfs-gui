@@ -7,6 +7,7 @@
         <el-button @click="exportCsv">export to csv</el-button>
         
       </el-button-group>
+      <span  style="float: left; margin-left: 20px" v-if="compression_type!='' &&  compression_type!='NONE'">Compression Type:{{ compression_type }}</span>
     </el-header>
     <el-main>
       <el-table
@@ -56,11 +57,11 @@ import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import {
   get_hdfs_orc_file_field_list,
-  get_hdfs_orc_file_rows_count,
   OrcField,
   read_orc_file_data_by_page,
   DataRow,
-  export_orc_file_date_to_csv,
+  export_orc_file_data_to_csv,
+  get_hdfs_orc_file_meta,
 } from "../api/hdfs_orc";
 import { ElLoading, ElMessage } from "element-plus";
 import { save } from "@tauri-apps/plugin-dialog";
@@ -86,6 +87,7 @@ const total = ref(0);
 const currentPage = ref(1);
 const orc_struct = ref("");
 const strunctdrawer = ref(false);
+const compression_type =ref("");
 const openStruct = async () => {
   strunctdrawer.value = !strunctdrawer.value;
 };
@@ -119,10 +121,12 @@ const reloadFile = async () => {
   orc_struct.value= JSON.stringify(fields.value);
   //数据行数
 
-  total.value = await get_hdfs_orc_file_rows_count(
+   const meta= await get_hdfs_orc_file_meta(
     props.hdfsConfigId as number,
     props.filePath as string
   );
+  total.value=meta.total
+  compression_type.value=meta.compression_type
   //按页读取数据
   await read_orc_file_data_by_page_func(
     props.hdfsConfigId as number,
@@ -180,7 +184,7 @@ const exportCsv = async () => {
   });
   if (selected) {
     const loadingInstance1 = ElLoading.service({ fullscreen: true });
-    await export_orc_file_date_to_csv(
+    await export_orc_file_data_to_csv(
       props.hdfsConfigId as number,
       props.filePath as string,
       selected,

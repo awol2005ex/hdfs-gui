@@ -107,6 +107,36 @@ pub async fn get_hdfs_orc_file_rows_count(id: i64, file_path: String) -> Result<
     Ok(total)
 }
 
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct OrcMeta {
+    pub total: i64,
+    pub compression_type: Option<String>,
+}
+//读取orc文件meta
+#[tauri::command]
+pub async fn get_hdfs_orc_file_meta(id: i64, file_path: String) -> Result<OrcMeta, String> {
+    let hdfs_client = get_hdfs_client(id).await?;
+    let hdfs_file_reader = hdfs_client
+        .read(&file_path)
+        .await
+        .map_err(|e| e.to_string())?;
+    let mut orc_reader = HdfsOrcFileReader(hdfs_file_reader);
+
+    let file_meta: FileMetadata = read_metadata_async::<HdfsOrcFileReader>(&mut orc_reader)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let total = file_meta.number_of_rows();
+    let mut compression_type ="NONE".to_owned();
+    if let Some(compression) = file_meta.compression(){
+        compression_type=compression.compression_type().to_string();
+    }
+    Ok(OrcMeta{
+        total:total as i64,
+        compression_type:Some(compression_type),
+    })
+}
+
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct ReadOrcResultColumn {
     pub name: String,
@@ -172,7 +202,7 @@ pub async fn read_orc_file_data_by_page(
 
 //导出orc文件数据到csv文件
 #[tauri::command]
-pub async fn export_orc_file_date_to_csv(
+pub async fn export_orc_file_data_to_csv(
     id: i64,
     file_path: String,
     target_csv_file_path: &str,
