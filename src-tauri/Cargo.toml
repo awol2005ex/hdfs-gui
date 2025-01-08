@@ -1,6 +1,6 @@
 [package]
 name = "hdfs-gui"
-version = "0.1.0"
+version = "0.3.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
@@ -31,8 +31,8 @@ tokio-stream = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
 
 hdfs-native = "0.11.0"
-orc-rust = {git = "https://github.com/awol2005ex/orc-rust.git", branch = "awol2005ex-br-csv-show-nested-struct-type-2025-01-07"}
-arrow = { git = "https://github.com/awol2005ex/arrow-rs.git",package="arrow", branch = "awol2005ex-br-csv-show-nested-struct-type-2025-01-07", features = ["prettyprint", "chrono-tz", "struct_display_json"] }
+orc-rust = {version="0.5.0"}
+arrow = { version="53.3.0", features = ["prettyprint", "chrono-tz"] }
 bytes = "1.9.0"
 futures-util = "0.3.31"
 futures = "0.3.31"

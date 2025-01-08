@@ -1,7 +1,6 @@
 use std::io::ErrorKind;
 
 use crate::get_hdfs_client;
-use arrow::util::display::{ArrayFormatter, FormatOptions};
 use bytes::Bytes;
 use futures::StreamExt;
 use futures::TryFutureExt;
@@ -16,8 +15,8 @@ use orc_rust::{
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use arrow::csv;
 use std::fs::File;
+use std::io::Write;
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct OrcField {
@@ -130,7 +129,6 @@ pub async fn read_orc_file_data_by_page(
     let mut it = arrow_reader.skip(page_number - 1);
     match it.next().await {
         Some(Ok(batch)) => {
-            let options = FormatOptions::default().with_display_error(true);
 
             if result_columns.is_empty() {
                 for field in batch.schema().fields() {
@@ -142,26 +140,25 @@ pub async fn read_orc_file_data_by_page(
             }
 
             let mut batch_result_data: Vec<HashMap<String, String>> = vec![];
-            let batch_size = batch.num_rows();
-            for (columnindex, column) in batch.columns().into_iter().enumerate() {
-                let formatter_result = ArrayFormatter::try_new(column.as_ref(), &options);
-                if formatter_result.is_ok() {
-                    let formatter = formatter_result.unwrap();
-                    for rowindex in 0..batch_size {
-                        
-                        let value = formatter.value(rowindex);
-                        if rowindex >= batch_result_data.len() {
-                            let mut row = HashMap::new();
-                            row.insert(result_columns[columnindex].name.clone(), value.to_string());
-                            batch_result_data.push(row);
+            let buf = Vec::new();
+            let mut writer = arrow::json::ArrayWriter::new(buf);
+            writer.write_batches(&vec![&batch]).unwrap_or_default();
+            writer.finish().unwrap_or_default();
+            let buf = writer.into_inner();
+            let json_str = String::from_utf8(buf).unwrap();
+            let json: Vec<serde_json::Value> = serde_json::from_str(&json_str).unwrap_or_default();
+            for item in json {
+                let mut row = HashMap::new();
+                if let Some(object) = item.as_object() {
+                    object.iter().for_each(|(k, v)| {
+                        if v.is_string() {
+                            row.insert(k.to_string(), v.as_str().unwrap_or_default().to_string());
                         } else {
-                            batch_result_data[rowindex].insert(
-                                result_columns[columnindex].name.clone(),
-                                value.to_string(),
-                            );
+                            row.insert(k.to_string(), v.to_string());
                         }
-                    }
+                    });
                 }
+                batch_result_data.push(row);
             }
             result_data.append(&mut batch_result_data);
         }
@@ -182,19 +179,68 @@ pub async fn export_orc_file_date_to_csv(
 ) -> Result<(), String> {
     let mut arrow_reader: ArrowStreamReader<HdfsOrcFileReader> =
         get_orc_reader(id, file_path, 10000).await?;
-
+    let mut csv_file =
+        File::create(target_csv_file_path).map_err(|e| format!("Failed to create file: {}", e))?;
+    let mut result_columns: Vec<String> = vec![];
     loop {
         if let Some(Ok(batch)) = arrow_reader.next().await {
-            let csv_file = File::create(target_csv_file_path)
-                .map_err(|e| format!("Failed to create file: {}", e))?;
-            let mut writer =  csv::WriterBuilder::new().with_delimiter(b',').with_show_nested(true).build(csv_file);
-
-            let _ = writer
-                .write(&batch)
-                .map_err(|e| format!("Failed to write file: {}", e))?;
+            if result_columns.is_empty() {
+                for field in batch.schema().fields() {
+                    result_columns.push(field.name().to_owned());
+                }
+                csv_file
+                    .write(result_columns.join(",").as_bytes())
+                    .map_err(|e| format!("Failed to write file: {}", e))?;
+                csv_file
+                    .write("\n".as_bytes())
+                    .map_err(|e| format!("Failed to write file: {}", e))?;
+            }
+            let buf = Vec::new();
+            let mut writer = arrow::json::ArrayWriter::new(buf);
+            writer
+                .write_batches(&vec![&batch])
+                .map_err(|e| format!("Failed to write batch: {}", e))?;
+            writer
+                .finish()
+                .map_err(|e| format!("Failed to write batch: {}", e))?;
+            let buf = writer.into_inner();
+            let json_str =
+                String::from_utf8(buf).map_err(|e| format!("Failed to parse json: {}", e))?;
+            let json: Vec<serde_json::Value> = serde_json::from_str(&json_str)
+                .map_err(|e| format!("Failed to parse json: {}", e))?;
+            for item in json {
+                if let Some(object) = item.as_object() {
+                    let row: Vec<String> = result_columns
+                        .iter()
+                        .map(|c| {
+                            let s = object.get(c).unwrap_or(&serde_json::Value::Null);
+                            let mut ss = "".to_owned();
+                            if s.is_string() {
+                                ss = s.as_str().unwrap_or_default().to_owned().replace("\"", "\"\"");
+                            } else {
+                                ss = s.to_string().replace("\"", "\"\"");
+                            }
+                            if ss.contains(",") {
+                                format!("\"{}\"", &ss)
+                            } else {
+                                ss
+                            }
+                        })
+                        .collect();
+                    csv_file
+                        .write(row.join(",").as_bytes())
+                        .map_err(|e| format!("Failed to write file: {}", e))?;
+                    csv_file
+                        .write("\n".as_bytes())
+                        .map_err(|e| format!("Failed to write file: {}", e))?;
+                }
+            }
         } else {
             break;
         }
     }
+    csv_file
+        .flush()
+        .map_err(|e| format!("Failed to write file: {}", e))?;
     Ok(())
 }
