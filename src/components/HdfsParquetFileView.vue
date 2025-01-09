@@ -7,7 +7,7 @@
         <el-button @click="exportCsv">export to csv</el-button>
         
       </el-button-group>
-      <span  style="float: left; margin-left: 20px">ORC View</span>
+      <span  style="float: left; margin-left: 20px">Parquet View</span>
       <span  style="float: left; margin-left: 20px" v-if="compression_type!='' &&  compression_type!='NONE'">Compression Type:{{ compression_type }}</span>
     </el-header>
     <el-main>
@@ -49,7 +49,7 @@
   </el-container>
 
   <el-drawer v-model="strunctdrawer" title="Struct">
-    {{ orc_struct }}
+    {{ parquet_struct }}
   </el-drawer>
 </template>
 
@@ -57,13 +57,13 @@
 import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import {
-  get_hdfs_orc_file_field_list,
-  OrcField,
-  read_orc_file_data_by_page,
+  get_hdfs_parquet_file_field_list,
+  ParquetField,
+  read_parquet_file_data_by_page,
   DataRow,
-  export_orc_file_data_to_csv,
-  get_hdfs_orc_file_meta,
-} from "../api/hdfs_orc";
+  export_parquet_file_data_to_csv,
+  get_hdfs_parquet_file_meta,
+} from "../api/hdfs_parquet";
 import { ElLoading, ElMessage } from "element-plus";
 import { save } from "@tauri-apps/plugin-dialog";
 const router = useRouter();
@@ -77,7 +77,7 @@ const props = withDefaults(defineProps<Props>(), {
   filePath: "",
 });
 //字段列表
-const fields = ref<OrcField[]>([]);
+const fields = ref<ParquetField[]>([]);
 //数据
 const data = ref<DataRow[]>([]);
 //每页条数
@@ -86,7 +86,7 @@ const pageSize = ref(10);
 const total = ref(0);
 //当前页
 const currentPage = ref(1);
-const orc_struct = ref("");
+const parquet_struct = ref("");
 const strunctdrawer = ref(false);
 const compression_type =ref("");
 const openStruct = async () => {
@@ -95,7 +95,7 @@ const openStruct = async () => {
 const handleCurrentChange = async (val: number) => {
   currentPage.value = val;
 
-  await read_orc_file_data_by_page_func(
+  await read_parquet_file_data_by_page_func(
     props.hdfsConfigId as number,
     props.filePath as string,
     pageSize.value,
@@ -104,7 +104,7 @@ const handleCurrentChange = async (val: number) => {
 };
 const handleSizeChange = async (val: number) => {
   pageSize.value = val;
-  await read_orc_file_data_by_page_func(
+  await read_parquet_file_data_by_page_func(
     props.hdfsConfigId as number,
     props.filePath as string,
     pageSize.value,
@@ -115,21 +115,21 @@ const handleSizeChange = async (val: number) => {
 //重新加载文件
 const reloadFile = async () => {
   //字段列表
-  fields.value = await get_hdfs_orc_file_field_list(
+  fields.value = await get_hdfs_parquet_file_field_list(
     props.hdfsConfigId as number,
     props.filePath as string
   );
-  orc_struct.value= JSON.stringify(fields.value);
+  parquet_struct.value= JSON.stringify(fields.value);
   //数据行数
 
-   const meta= await get_hdfs_orc_file_meta(
+   const meta= await get_hdfs_parquet_file_meta(
     props.hdfsConfigId as number,
     props.filePath as string
   );
   total.value=meta.total
   compression_type.value=meta.compression_type
   //按页读取数据
-  await read_orc_file_data_by_page_func(
+  await read_parquet_file_data_by_page_func(
     props.hdfsConfigId as number,
     props.filePath as string,
     pageSize.value,
@@ -147,7 +147,7 @@ watch(
 //重新加载文件
 reloadFile();
 //按页读取数据
-const read_orc_file_data_by_page_func = async (
+const read_parquet_file_data_by_page_func = async (
   currentHdfsConfigId: number,
   readFilePath: string,
   readPageSize: number,
@@ -155,7 +155,7 @@ const read_orc_file_data_by_page_func = async (
 ) => {
   const loadingInstance1 = ElLoading.service({ fullscreen: true });
   try {
-    data.value = await read_orc_file_data_by_page(
+    data.value = await read_parquet_file_data_by_page(
       currentHdfsConfigId,
       readFilePath,
       readPageSize,
@@ -185,7 +185,7 @@ const exportCsv = async () => {
   });
   if (selected) {
     const loadingInstance1 = ElLoading.service({ fullscreen: true });
-    await export_orc_file_data_to_csv(
+    await export_parquet_file_data_to_csv(
       props.hdfsConfigId as number,
       props.filePath as string,
       selected,

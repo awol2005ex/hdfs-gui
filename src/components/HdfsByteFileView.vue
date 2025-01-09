@@ -118,6 +118,17 @@ const reloadFile = async () => {
         });
         return;
       }
+      //自动跳转到parquet查看模式
+      if (previewResult.isparquet) {
+        router.replace({
+          path: "/HdfsFileView/" + route.params.id,
+          query: {
+            path: props.filePath,
+            mode: "parquet",
+          },
+        });
+        return;
+      }
 
       codeValue.value = previewResult.content;
       fileSize.value = previewResult.length;

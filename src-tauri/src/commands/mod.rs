@@ -6,3 +6,6 @@ pub mod hdfs_file;
 pub mod hdfs_acls;
 //hdfs orc文件操作
 pub mod hdfs_orc;
+
+//hdfs parquet文件操作
+pub mod hdfs_parquet;

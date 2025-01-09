@@ -1,4 +1,4 @@
-use commands::{hdfs_acls::*, hdfs_config::*, hdfs_file::*, hdfs_orc::*};
+use commands::{hdfs_acls::*, hdfs_config::*, hdfs_file::*, hdfs_orc::* ,hdfs_parquet::*};
 
 mod commands;
 mod db;
@@ -66,6 +66,18 @@ pub fn run() {
             read_orc_file_data_by_page,
             //导出orc数据到csv
             export_orc_file_data_to_csv,
+
+
+            //获取parquet文件字段列表
+            get_hdfs_parquet_file_field_list,
+            //获取parquet文件行数
+            get_hdfs_parquet_file_rows_count,
+            //读取parquet文件meta
+            get_hdfs_parquet_file_meta,
+            //分页读取parquet文件数据
+            read_parquet_file_data_by_page,
+            //导出parquet数据到csv
+            export_parquet_file_data_to_csv,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
