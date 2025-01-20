@@ -188,3 +188,18 @@ export const download_file = async (
   });
   return result;
 };
+
+//下载目录
+export const download_folder = async (
+  id: number,
+  source_file_path: string,
+  target_file_parent_path: string
+) => {
+  const result: string = await invoke("download_folder", {
+    id: id,
+    sourceFilePath: source_file_path,
+    targetFileParentPath: target_file_parent_path,
+  });
+  return result;
+};
+

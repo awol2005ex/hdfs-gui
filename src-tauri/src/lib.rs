@@ -78,6 +78,8 @@ pub fn run() {
             read_parquet_file_data_by_page,
             //导出parquet数据到csv
             export_parquet_file_data_to_csv,
+            //下载hdfs目录到目标本地目录
+            download_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

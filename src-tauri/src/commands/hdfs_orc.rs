@@ -1,5 +1,4 @@
 use std::io::ErrorKind;
-
 use crate::get_hdfs_client;
 use bytes::Bytes;
 use futures::StreamExt;
@@ -244,7 +243,7 @@ pub async fn export_orc_file_data_to_csv(
                         .iter()
                         .map(|c| {
                             let s = object.get(c).unwrap_or(&serde_json::Value::Null);
-                            let mut ss = "".to_owned();
+                            let ss;
                             if s.is_string() {
                                 ss = s.as_str().unwrap_or_default().to_owned().replace("\"", "\"\"");
                             } else {

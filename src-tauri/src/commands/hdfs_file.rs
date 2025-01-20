@@ -291,9 +291,9 @@ pub struct HdfsFileContentPreview {
     //预览内容
     pub content: String,
     //是否orc类型文件
-    pub isorc:bool,
+    pub isorc: bool,
     //是否parquet类型文件
-    pub isparquet:bool,
+    pub isparquet: bool,
 }
 #[tauri::command]
 pub async fn get_hdfs_file_content_preview(
@@ -312,14 +312,14 @@ pub async fn get_hdfs_file_content_preview(
         .await
         .map_err(|e| e.to_string())?;
     //判断文件是否ORC
-    let content=String::from_utf8_lossy(buf.to_vec().as_slice()).to_string();
-    let isorc=content.starts_with("ORC");
-    let isparquet=content.starts_with("PAR1");
+    let content = String::from_utf8_lossy(buf.to_vec().as_slice()).to_string();
+    let isorc = content.starts_with("ORC");
+    let isparquet = content.starts_with("PAR1");
     Ok(HdfsFileContentPreview {
-        content:content ,
+        content: content,
         length: file_status.length as usize,
-        isorc:isorc,
-        isparquet:isparquet,
+        isorc: isorc,
+        isparquet: isparquet,
     })
 }
 
@@ -331,10 +331,7 @@ pub struct HdfsFileContent {
     pub content: String,
 }
 #[tauri::command]
-pub async fn get_hdfs_file_content(
-    id: i64, 
-    file_path: String,
-) -> Result<HdfsFileContent, String> {
+pub async fn get_hdfs_file_content(id: i64, file_path: String) -> Result<HdfsFileContent, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
     let file_status = client
         .get_file_info(&file_path)
@@ -392,6 +389,52 @@ pub async fn download_file(
         }
     }
 
+    Ok(true)
+}
+
+//下载hdfs目录到目标本地目录
+#[tauri::command]
+pub async fn download_folder(
+    id: i64,
+    source_file_path: String,
+    target_file_parent_path: String,
+) -> Result<bool, String> {
+    let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
+
+    let dir = client.list_status_iter(&source_file_path, true);
+    while let Some(entry) = dir.next().await {
+        let entry = entry.map_err(|e| format!("entry file status :{}",&e.to_string()))?;
+        let entry_path = entry.path.replace("\\", "/");
+
+        
+
+        if entry.isdir {//目录创建目录
+            let target_dir_path = format!("{}{}", &target_file_parent_path, &entry_path);
+            std::fs::create_dir_all(&target_dir_path).map_err(|e| e.to_string())?;
+            continue;
+        } else {
+            let mut target_file = File::create(&format!(
+                "{}{}",
+                &target_file_parent_path, &entry_path
+            ))
+            .map_err(|e| e.to_string())?;
+            let mut hdfs_file_reader = client.read(&entry_path).await.map_err(|e| e.to_string())?;
+
+            loop {
+                if let Ok(b) = hdfs_file_reader.read(102400).await {
+                    // 如果没有字节可读，跳出循环
+                    if b.len() == 0 {
+                        break;
+                    }
+                    // 从buffer构造字符串
+                    let _write_size = target_file.write(&b).map_err(|e| e.to_string())?;
+                    //println!("writeSize:{}", writeSize);
+                } else {
+                    break;
+                }
+            }
+        }
+    }
     Ok(true)
 }
 

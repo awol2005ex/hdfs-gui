@@ -71,6 +71,13 @@
                 />
                 <el-button
                   type="primary"
+                  :icon="Download"
+                  circle
+                  @click="downloadFileToLocal"
+                  title="Download File To Local"
+                />
+                <el-button
+                  type="primary"
                   :icon="Suitcase"
                   circle
                   @click="SetFilePermission"
@@ -314,6 +321,7 @@ import {
   FolderAdd,
   DocumentAdd,
   Suitcase,
+  Download,
 } from "@element-plus/icons-vue";
 import {
   getHdfsFileList,
@@ -326,6 +334,7 @@ import {
   setHdfsFilesPermissions,
   renameHdfsFile,
   getHdfsFile,
+  download_folder,
 } from "../api/hdfs_file.ts";
 import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
 //选择文件
@@ -979,6 +988,41 @@ const CopyPath= async (file: HdfsFile) => {
     message: "Copy success",
     type: "success",
   });
+}
+
+//下载文件到本地
+const downloadFileToLocal = async () => {
+  if (multipleSelection.value.length == 0) {
+    ElMessage({
+      showClose: true,
+      message: "Please select files",
+      type: "error",
+    });
+    return;
+  }
+  const selected = await open({
+    multiple: false,
+    directory: true,
+  });
+  const loadingInstance1 = ElLoading.service({ fullscreen: true });
+
+  try {
+    for(var i=0;i<multipleSelection.value.length;i++){
+      const file = multipleSelection.value[i];
+      await download_folder(
+        parseInt(route.params.id as string),
+        file.path.replace("\\", "/"),
+        selected || ""
+      );
+    }
+  }catch (err: any) {
+    ElMessage({
+      showClose: true,
+      message: err.toString(),
+      type: "error",
+    });
+  }
+  loadingInstance1.close();
 }
 </script>
 

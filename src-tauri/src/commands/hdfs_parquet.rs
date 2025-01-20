@@ -4,7 +4,6 @@ use std::sync::Arc;
 use crate::get_hdfs_client;
 use bytes::Bytes;
 use futures::StreamExt;
-use futures::TryFutureExt;
 use hdfs_native::file::FileReader;
 use parquet::arrow::async_reader::AsyncFileReader;
 use parquet::arrow::async_reader::MetadataFetch;
@@ -285,7 +284,7 @@ pub async fn export_parquet_file_data_to_csv(
                         .iter()
                         .map(|c| {
                             let s = object.get(c).unwrap_or(&serde_json::Value::Null);
-                            let mut ss = "".to_owned();
+                            let  ss;
                             if s.is_string() {
                                 ss = s.as_str().unwrap_or_default().to_owned().replace("\"", "\"\"");
                             } else {
