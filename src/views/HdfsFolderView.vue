@@ -468,6 +468,7 @@ const goToFile = (row: HdfsFile) => {
 };
 //打开目录
 const goToFolder = (row: HdfsFile) => {
+  currentPage.value = 1;
   router.push({
     path: "/HdfsFolderView/" + route.params.id,
     query: {
@@ -520,6 +521,7 @@ const goToLocation = async () => {
     cancelButtonText: "Cancel",
   });
   if (newLocation.action == "confirm") {
+    currentPage.value=1
     router.push({
       path: "/HdfsFolderView/" + route.params.id,
       query: {

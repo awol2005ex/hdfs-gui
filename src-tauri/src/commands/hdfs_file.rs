@@ -10,6 +10,7 @@ use futures::future::BoxFuture;
 use futures_util::FutureExt;
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
+use std::path::Path;
 //hdfs配置
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Clone)]
 pub struct HdfsFile {
@@ -406,19 +407,26 @@ pub async fn download_folder(
         let entry = entry.map_err(|e| format!("entry file status :{}",&e.to_string()))?;
         let entry_path = entry.path.replace("\\", "/");
 
-        
+        std::fs::create_dir_all(&target_file_parent_path.replace("\\", "/")).map_err(|e| e.to_string())?;
 
         if entry.isdir {//目录创建目录
-            let target_dir_path = format!("{}{}", &target_file_parent_path, &entry_path);
-            std::fs::create_dir_all(&target_dir_path).map_err(|e| e.to_string())?;
+            let target_dir_path = format!("{}{}", &target_file_parent_path.replace("\\", "/"), &entry_path);
+            std::fs::create_dir_all(&target_dir_path.replace("\\", "/")).map_err(|e| format!("create folder error :{}",&e.to_string()))?;
             continue;
         } else {
-            let mut target_file = File::create(&format!(
+
+            let target_file_path=format!(
                 "{}{}",
-                &target_file_parent_path, &entry_path
-            ))
-            .map_err(|e| e.to_string())?;
-            let mut hdfs_file_reader = client.read(&entry_path).await.map_err(|e| e.to_string())?;
+                &target_file_parent_path.replace("\\", "/"), &entry_path
+            );
+            let target_file_dir_path = Path::new(&target_file_path).parent();
+            if !target_file_dir_path.is_none() {
+                std::fs::create_dir_all(&target_file_dir_path.unwrap()).map_err(|e| format!("create folder error :{}",&e.to_string()))?;
+            }
+            
+            let mut target_file = File::create(&target_file_path)
+            .map_err(|e| format!("create file {}{} error :{}",&target_file_parent_path.replace("\\", "/"), &entry_path,&e.to_string()))?;
+            let mut hdfs_file_reader = client.read(&entry_path).await.map_err(|e| format!("read file error :{}",&e.to_string()))?;
 
             loop {
                 if let Ok(b) = hdfs_file_reader.read(102400).await {

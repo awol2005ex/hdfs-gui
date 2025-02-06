@@ -1,4 +1,3 @@
-use std::io::ErrorKind;
 use std::sync::Arc;
 
 use crate::get_hdfs_client;
