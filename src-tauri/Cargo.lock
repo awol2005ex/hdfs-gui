@@ -1934,7 +1934,7 @@ dependencies = [
 [[package]]
 name = "hdfs-native"
 version = "0.11.0"
-source = "git+https://github.com/awol2005ex/hdfs-native.git?branch=awol2005ex-br-list-dir-windows-error-20250120#f17914f5f92b37cf0e8c52929bf443bba9b9ad52"
+source = "git+https://github.com/Kimahriman/hdfs-native.git?branch=master#441d56c19bf1bf91d773ac7f691a6b643a9b2a1c"
 dependencies = [
  "aes",
  "base64 0.22.1",
