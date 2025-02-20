@@ -479,8 +479,12 @@ const formatFileSize = (size: number) => {
     return (size / 1024).toFixed(2) + " KB";
   } else if (size < 1024 * 1024 * 1024) {
     return (size / 1024 / 1024).toFixed(2) + " MB";
-  } else {
+  } else if (size < 1024 * 1024 * 1024 * 1024) {
     return (size / 1024 / 1024 / 1024).toFixed(2) + " GB";
+  } else if (size < 1024 * 1024 * 1024 * 1024 * 1024){
+    return (size / 1024 / 1024 / 1024 / 1024).toFixed(2) + " TB";
+  } else {
+    return (size / 1024 / 1024 / 1024 / 1024 / 1024).toFixed(2) + " PB";
   }
 };
 //打开文件
