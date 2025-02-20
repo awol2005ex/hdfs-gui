@@ -24,7 +24,6 @@
           <el-button type="warning" @click="deleteHdfsFileAllAclFunc"
             >Delete All</el-button
           >
-          
         </el-button-group>
         <el-table :data="acls.entries" border>
           <el-table-column prop="rtype" label="Type" width="180" />
@@ -184,6 +183,11 @@ const acls: Reactive<HdfsAcl> = reactive({
     modification_time: 0,
     access_time: 0,
     length: 0,
+    file_count: 0,
+    directory_count: 0,
+    quota: 0,
+    space_consumed: 0,
+    space_quota: 0,
   },
 });
 
@@ -242,7 +246,7 @@ const deleteAcl = async (acl: HdfsAclEntry) => {
       acl.rtype,
       acl.scope,
       acl.permissions,
-      acl.name==""?null:acl.name,
+      acl.name == "" ? null : acl.name
     );
     if (b) {
       ElMessage({
@@ -300,14 +304,10 @@ const deleteHdfsFileDefaultAclFunc = async () => {
   loadingInstance1.close();
 };
 
-
 const deleteHdfsFileAllAclFunc = async () => {
   const loadingInstance1 = ElLoading.service({ fullscreen: true });
   try {
-    const b = await deleteHdfsFileAllAcl(
-      props.hdfsConfigId,
-      props.filePath
-    );
+    const b = await deleteHdfsFileAllAcl(props.hdfsConfigId, props.filePath);
     if (b) {
       ElMessage({
         showClose: true,
