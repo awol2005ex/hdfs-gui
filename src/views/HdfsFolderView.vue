@@ -38,6 +38,14 @@
                 @change="on_search_words_change"
                 clearable
               />
+              <el-switch
+                v-model="show_content_summary"
+                inline-prompt
+                size="large"
+                @change="on_show_content_summary_change"
+                active-text="show content summary"
+                inactive-text="don't show content summary"
+              />
 
               <el-button-group style="float: right">
                 <el-button
@@ -184,9 +192,24 @@
             sortable="custom"
           >
             <template #default="scope">
-              {{ scope.row.isdir ? "" : formatFileSize(scope.row.length) }}
+              {{ scope.row.isdir && !show_content_summary ? "" : formatFileSize(scope.row.length) }}
             </template>
           </el-table-column>
+
+          <el-table-column v-if="show_content_summary"
+            prop="file_count"
+            label="File Count"
+            width="120"
+            show-overflow-tooltip
+            sortable="custom"
+          ></el-table-column>
+          <el-table-column v-if="show_content_summary"
+            prop="directory_count"
+            label="Directory Count"
+            width="120"
+            show-overflow-tooltip
+            sortable="custom"
+          ></el-table-column>
           <el-table-column
             prop="owner"
             label="Owner"
@@ -382,7 +405,7 @@ const fileListData = ref<HdfsFile[]>([]);
 
 const fileListPageData = ref<HdfsFile[]>([]);
 
-const filert_by_search_words = () => {
+const filter_by_search_words = () => {
   if (search_words.value == "") {
     fileListPageData.value = fileListData.value
       //排序
@@ -421,16 +444,19 @@ const filert_by_search_words = () => {
   total.value = filterData.length;
   return;
 };
+//是否显示目录明细
+const show_content_summary = ref(false);
 //刷新表格
 const refreshData = () => {
   const loadingInstance1 = ElLoading.service({ fullscreen: true });
   getHdfsFileList(
     parseInt(route.params.id as string),
-    current_parent_path.value
+    current_parent_path.value,
+    show_content_summary.value
   )
     .then((res) => {
       fileListData.value = res;
-      filert_by_search_words();
+      filter_by_search_words();
       loadingInstance1.close();
     })
     .catch((err) => {
@@ -491,15 +517,20 @@ const total = ref(0);
 const currentPage = ref(1);
 const handleCurrentChange = async (val: number) => {
   currentPage.value = val;
-  filert_by_search_words();
+  filter_by_search_words();
 };
 const handleSizeChange = async (val: number) => {
   pageSize.value = val;
-  filert_by_search_words();
+  filter_by_search_words();
 };
 
 const on_search_words_change = () => {
-  filert_by_search_words();
+  refreshData();
+  filter_by_search_words();
+};
+const on_show_content_summary_change = () => {
+  refreshData();
+  filter_by_search_words();
 };
 //搜索框
 const search_words = ref("");
@@ -512,7 +543,7 @@ const sortChange = (row: { column: any; prop: any; order: any }) => {
 
   sortProp.value = prop;
   sortOrder.value = order;
-  filert_by_search_words();
+  filter_by_search_words();
 };
 //跳转地址
 const goToLocation = async () => {

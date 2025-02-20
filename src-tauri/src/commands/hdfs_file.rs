@@ -24,6 +24,12 @@ pub struct HdfsFile {
     pub modification_time: u64,
     pub access_time: u64,
     pub length: usize,
+
+    pub file_count: Option<u64>,
+    pub directory_count: Option<u64>,
+    pub quota: Option<u64>,
+    pub space_consumed: Option<u64>,
+    pub space_quota: Option<u64>,
 }
 pub async fn get_hdfs_client(id: i64) -> Result<hdfs_native::Client, String> {
     let hdfs_config_instance: HdfsConfig =
@@ -43,7 +49,11 @@ pub async fn get_hdfs_client(id: i64) -> Result<hdfs_native::Client, String> {
 }
 //获取hdfs文件列表
 #[tauri::command]
-pub async fn get_hdfs_file_list(id: i64, parent_path: String) -> Result<Vec<HdfsFile>, String> {
+pub async fn get_hdfs_file_list(
+    id: i64,
+    parent_path: String,
+    show_content_summary: bool,
+) -> Result<Vec<HdfsFile>, String> {
     //println!("get_hdfs_file_list:parent_path:{}", &parent_path);
     let client = get_hdfs_client(id).await?;
     let files = client
@@ -51,30 +61,47 @@ pub async fn get_hdfs_file_list(id: i64, parent_path: String) -> Result<Vec<Hdfs
         .await
         .map_err(|e| e.to_string())?;
 
-    //println!("get_hdfs_file_list:files:{:?}", &files);
-    let hdfs_files: Vec<HdfsFile> = files
-        .iter()
-        .map(|file: &FileStatus| HdfsFile {
-            //根据路径获取文件名
-            name: std::path::Path::new(&file.path)
-                .file_name()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default()
-                .to_string(),
-            path: file.path.clone().replace("\\", "/"),
-            parent_path: parent_path.clone(),
-            owner: file.owner.clone(),
-            group: file.group.clone(),
-            isdir: file.isdir.clone(),
-            permission: file.permission.clone(),
-            modification_time: file.modification_time.clone(),
-            access_time: file.access_time.clone(),
-            length: file.length.clone(),
-        })
-        .collect();
-    //println!("get_hdfs_file_list:hdfsFiles:{:?}", &hdfs_files);
-    Ok(hdfs_files)
+        let mut hdfs_files = Vec::new();
+
+        for file in files.iter() {
+            let mut hdfs_file = HdfsFile {
+                name: std::path::Path::new(&file.path)
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap_or_default()
+                    .to_string(),
+                path: file.path.clone().replace("\\", "/"),
+                parent_path: parent_path.clone(),
+                owner: file.owner.clone(),
+                group: file.group.clone(),
+                isdir: file.isdir.clone(),
+                permission: file.permission.clone(),
+                modification_time: file.modification_time.clone(),
+                access_time: file.access_time.clone(),
+                length: file.length.clone(),
+                file_count: None,
+                directory_count: None,
+                quota: None,
+                space_consumed: None,
+                space_quota: None,
+            };
+    
+            if file.isdir && show_content_summary {
+                let content_summary: hdfs_native::client::ContentSummary = client.get_content_summary(&file.path).await.map_err(|e| e.to_string())?;
+                // 更新hdfs_file的内容摘要字段
+                hdfs_file.length= content_summary.length as usize; 
+                hdfs_file.file_count = Some(content_summary.file_count);
+                hdfs_file.directory_count = Some(content_summary.directory_count);
+                hdfs_file.quota = Some(content_summary.quota);
+                hdfs_file.space_consumed = Some(content_summary.space_consumed);
+                hdfs_file.space_quota = Some(content_summary.space_quota);
+            }
+    
+            hdfs_files.push(hdfs_file);
+        }
+    
+        Ok(hdfs_files)
 }
 
 //获取hdfs单个文件状态
@@ -107,6 +134,11 @@ pub async fn get_hdfs_file(id: i64, file_path: String) -> Result<HdfsFile, Strin
         modification_time: file.modification_time.clone(),
         access_time: file.access_time.clone(),
         length: file.length.clone(),
+        file_count: None,
+        directory_count: None,
+        quota: None,
+        space_consumed: None,
+        space_quota: None,
     };
     //println!("get_hdfs_file_list:hdfsFiles:{:?}", &hdfs_files);
     Ok(hdfs_file)
@@ -404,29 +436,46 @@ pub async fn download_folder(
 
     let dir = client.list_status_iter(&source_file_path, true);
     while let Some(entry) = dir.next().await {
-        let entry = entry.map_err(|e| format!("entry file status :{}",&e.to_string()))?;
+        let entry = entry.map_err(|e| format!("entry file status :{}", &e.to_string()))?;
         let entry_path = entry.path.replace("\\", "/");
 
-        std::fs::create_dir_all(&target_file_parent_path.replace("\\", "/")).map_err(|e| e.to_string())?;
+        std::fs::create_dir_all(&target_file_parent_path.replace("\\", "/"))
+            .map_err(|e| e.to_string())?;
 
-        if entry.isdir {//目录创建目录
-            let target_dir_path = format!("{}{}", &target_file_parent_path.replace("\\", "/"), &entry_path);
-            std::fs::create_dir_all(&target_dir_path.replace("\\", "/")).map_err(|e| format!("create folder error :{}",&e.to_string()))?;
+        if entry.isdir {
+            //目录创建目录
+            let target_dir_path = format!(
+                "{}{}",
+                &target_file_parent_path.replace("\\", "/"),
+                &entry_path
+            );
+            std::fs::create_dir_all(&target_dir_path.replace("\\", "/"))
+                .map_err(|e| format!("create folder error :{}", &e.to_string()))?;
             continue;
         } else {
-
-            let target_file_path=format!(
+            let target_file_path = format!(
                 "{}{}",
-                &target_file_parent_path.replace("\\", "/"), &entry_path
+                &target_file_parent_path.replace("\\", "/"),
+                &entry_path
             );
             let target_file_dir_path = Path::new(&target_file_path).parent();
             if !target_file_dir_path.is_none() {
-                std::fs::create_dir_all(&target_file_dir_path.unwrap()).map_err(|e| format!("create folder error :{}",&e.to_string()))?;
+                std::fs::create_dir_all(&target_file_dir_path.unwrap())
+                    .map_err(|e| format!("create folder error :{}", &e.to_string()))?;
             }
-            
-            let mut target_file = File::create(&target_file_path)
-            .map_err(|e| format!("create file {}{} error :{}",&target_file_parent_path.replace("\\", "/"), &entry_path,&e.to_string()))?;
-            let mut hdfs_file_reader = client.read(&entry_path).await.map_err(|e| format!("read file error :{}",&e.to_string()))?;
+
+            let mut target_file = File::create(&target_file_path).map_err(|e| {
+                format!(
+                    "create file {}{} error :{}",
+                    &target_file_parent_path.replace("\\", "/"),
+                    &entry_path,
+                    &e.to_string()
+                )
+            })?;
+            let mut hdfs_file_reader = client
+                .read(&entry_path)
+                .await
+                .map_err(|e| format!("read file error :{}", &e.to_string()))?;
 
             loop {
                 if let Ok(b) = hdfs_file_reader.read(102400).await {

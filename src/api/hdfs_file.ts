@@ -11,6 +11,11 @@ export interface HdfsFile {
   modification_time: number;
   access_time: number;
   length: number;
+  file_count : number;
+  directory_count  : number;
+  quota  : number;
+  space_consumed  : number;
+  space_quota  : number;
   [key: string]: string | number | Boolean;
 }
 //获取文件预览二进制内容
@@ -26,10 +31,11 @@ export interface HdfsFileContent {
 }
 
 //获取HDFS文件列表
-export const getHdfsFileList = async (id: number, parent_path: string) => {
+export const getHdfsFileList = async (id: number, parent_path: string ,show_content_summary: Boolean) => {
   const result: Array<HdfsFile> = await invoke("get_hdfs_file_list", {
     id: id,
     parentPath: parent_path,
+    showContentSummary:show_content_summary,
   });
   return result;
 };
