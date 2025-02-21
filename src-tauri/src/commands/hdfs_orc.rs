@@ -1,4 +1,3 @@
-use std::io::ErrorKind;
 use crate::get_hdfs_client;
 use bytes::Bytes;
 use futures::StreamExt;
@@ -13,6 +12,7 @@ use orc_rust::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::io::ErrorKind;
 
 use std::fs::File;
 use std::io::Write;
@@ -34,7 +34,7 @@ impl AsyncChunkReader for HdfsOrcFileReader {
         offset_from_start: u64,
         length: u64,
     ) -> futures::future::BoxFuture<'_, std::io::Result<Bytes>> {
-        //println!("get_bytes: offset_from_start:{},length:{}--start", &offset_from_start,&length);
+        //log::info!("get_bytes: offset_from_start:{},length:{}--start", &offset_from_start,&length);
         let mut buf_len = length;
         if offset_from_start + length > self.0.file_length() as u64 {
             buf_len = self.0.file_length() as u64 - offset_from_start;
@@ -76,7 +76,7 @@ pub async fn get_hdfs_orc_file_field_list(
     let arrow_reader: ArrowStreamReader<HdfsOrcFileReader> =
         get_orc_reader(id, file_path, 1).await?;
     let schema = arrow_reader.schema();
-    println!("schema:{:?}", schema);
+    log::info!("schema:{:?}", schema);
     let mut field_list = vec![];
     for field in schema.fields() {
         let orc_field = OrcField {
@@ -126,13 +126,13 @@ pub async fn get_hdfs_orc_file_meta(id: i64, file_path: String) -> Result<OrcMet
         .map_err(|e| e.to_string())?;
 
     let total = file_meta.number_of_rows();
-    let mut compression_type ="NONE".to_owned();
-    if let Some(compression) = file_meta.compression(){
-        compression_type=compression.compression_type().to_string();
+    let mut compression_type = "NONE".to_owned();
+    if let Some(compression) = file_meta.compression() {
+        compression_type = compression.compression_type().to_string();
     }
-    Ok(OrcMeta{
-        total:total as i64,
-        compression_type:Some(compression_type),
+    Ok(OrcMeta {
+        total: total as i64,
+        compression_type: Some(compression_type),
     })
 }
 
@@ -158,7 +158,6 @@ pub async fn read_orc_file_data_by_page(
     let mut it = arrow_reader.skip(page_number - 1);
     match it.next().await {
         Some(Ok(batch)) => {
-
             if result_columns.is_empty() {
                 for field in batch.schema().fields() {
                     result_columns.push(ReadOrcResultColumn {
@@ -245,7 +244,11 @@ pub async fn export_orc_file_data_to_csv(
                             let s = object.get(c).unwrap_or(&serde_json::Value::Null);
                             let ss;
                             if s.is_string() {
-                                ss = s.as_str().unwrap_or_default().to_owned().replace("\"", "\"\"");
+                                ss = s
+                                    .as_str()
+                                    .unwrap_or_default()
+                                    .to_owned()
+                                    .replace("\"", "\"\"");
                             } else {
                                 ss = s.to_string().replace("\"", "\"\"");
                             }

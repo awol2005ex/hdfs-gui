@@ -25,7 +25,7 @@ pub struct HdfsAclEntry {
 //获取hdfs文件acl列表
 #[tauri::command]
 pub async fn get_hdfs_file_acl_list(id: i64, file_path: String) -> Result<HdfsAcl, String> {
-    //println!("get_hdfs_file_list:parent_path:{}", &parent_path);
+    //log::info!("get_hdfs_file_list:parent_path:{}", &parent_path);
     let client = get_hdfs_client(id).await?;
     let file_status = client
         .get_file_info(&file_path)
@@ -93,7 +93,7 @@ pub async fn add_acl(
 ) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
 
-    println!(
+    log::info!(
         "add_acl:file_path:{}, rtype:{}, scope:{}, permissions:{}, name:{}",
         &file_path,
         &rtype,
@@ -124,7 +124,7 @@ pub async fn delete_acl(
 ) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
 
-    println!(
+    log::info!(
         "remove_acl:file_path:{}, rtype:{}, scope:{}, permissions:{}, name:{}",
         &file_path,
         &rtype,
@@ -148,7 +148,7 @@ pub async fn delete_acl(
 pub async fn delete_default_acl(id: i64, file_path: String) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
 
-    println!("delete_default_acl:file_path:{}", &file_path);
+    log::info!("delete_default_acl:file_path:{}", &file_path);
     client
         .remove_default_acl(&file_path)
         .await
@@ -162,7 +162,7 @@ pub async fn delete_default_acl(id: i64, file_path: String) -> Result<bool, Stri
 pub async fn delete_all_acl(id: i64, file_path: String) -> Result<bool, String> {
     let client = get_hdfs_client(id).await.map_err(|e| e.to_string())?;
 
-    println!("delete_all_acl:file_path:{}", &file_path);
+    log::info!("delete_all_acl:file_path:{}", &file_path);
     client
         .remove_acl(&file_path)
         .await

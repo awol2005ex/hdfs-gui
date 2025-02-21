@@ -102,7 +102,7 @@ pub async fn get_hdfs_parquet_file_field_list(
     let arrow_reader: ParquetRecordBatchStream<HdfsParquetFileReader> =
         get_parquet_reader(id, file_path, 1).await?;
     let schema = arrow_reader.schema();
-    println!("schema:{:?}", schema);
+    log::info!("schema:{:?}", schema);
     let mut field_list = vec![];
     for field in schema.fields() {
         let parquet_field = ParquetField {
@@ -171,9 +171,6 @@ pub async fn get_hdfs_parquet_file_meta(id: i64, file_path: String) -> Result<Pa
     })
 }
 
-
-
-
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct ReadParquetResultColumn {
     pub name: String,
@@ -188,7 +185,7 @@ pub async fn read_parquet_file_data_by_page(
     page_number: usize,
 ) -> Result<Vec<HashMap<String, String>>, String> {
     let arrow_reader: ParquetRecordBatchStream<HdfsParquetFileReader> =
-    get_parquet_reader(id, file_path, page_size).await?;
+        get_parquet_reader(id, file_path, page_size).await?;
 
     let mut result_data: Vec<HashMap<String, String>> = vec![];
     let mut result_columns: Vec<ReadParquetResultColumn> = vec![];
@@ -196,7 +193,6 @@ pub async fn read_parquet_file_data_by_page(
     let mut it = arrow_reader.skip(page_number - 1);
     match it.next().await {
         Some(Ok(batch)) => {
-
             if result_columns.is_empty() {
                 for field in batch.schema().fields() {
                     result_columns.push(ReadParquetResultColumn {
@@ -237,8 +233,6 @@ pub async fn read_parquet_file_data_by_page(
     return Ok(result_data);
 }
 
-
-
 //导出parquet文件数据到csv文件
 #[tauri::command]
 pub async fn export_parquet_file_data_to_csv(
@@ -247,7 +241,7 @@ pub async fn export_parquet_file_data_to_csv(
     target_csv_file_path: &str,
 ) -> Result<(), String> {
     let mut arrow_reader: ParquetRecordBatchStream<HdfsParquetFileReader> =
-    get_parquet_reader(id, file_path, 10000).await?;
+        get_parquet_reader(id, file_path, 10000).await?;
     let mut csv_file =
         File::create(target_csv_file_path).map_err(|e| format!("Failed to create file: {}", e))?;
     let mut result_columns: Vec<String> = vec![];
@@ -283,9 +277,13 @@ pub async fn export_parquet_file_data_to_csv(
                         .iter()
                         .map(|c| {
                             let s = object.get(c).unwrap_or(&serde_json::Value::Null);
-                            let  ss;
+                            let ss;
                             if s.is_string() {
-                                ss = s.as_str().unwrap_or_default().to_owned().replace("\"", "\"\"");
+                                ss = s
+                                    .as_str()
+                                    .unwrap_or_default()
+                                    .to_owned()
+                                    .replace("\"", "\"\"");
                             } else {
                                 ss = s.to_string().replace("\"", "\"\"");
                             }

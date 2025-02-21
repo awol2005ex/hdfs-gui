@@ -20,7 +20,7 @@
 
 ## Key Features
 
-* Hdfs Files list, read and display , write , upload ,set permissions , delete files and directories , set file acls.
+* Hdfs Files list, read and display , write , upload ,set permissions , delete files and directories , set file acls , show folder content summary.
 * Hdfs Orc viewer ,show struct ,export to csv.
 Support
 * Cross platform

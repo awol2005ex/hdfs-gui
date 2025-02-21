@@ -8,24 +8,25 @@ pub static DB_POOL: OnceCell<Pool<Sqlite>> = OnceCell::new();
 pub async fn init_db() -> Result<(), anyhow::Error> {
     //创建数据库
     if !Sqlite::database_exists(DB_FILE).await.unwrap_or(false) {
-        println!("Creating database {}", DB_FILE);
+        log::info!("Creating database {}", DB_FILE);
         match Sqlite::create_database(DB_FILE).await {
-            Ok(_) => println!("Create db success"),
+            Ok(_) => log::info!("Create db success"),
             Err(error) => panic!("error: {}", error),
         }
     } else {
-        println!("Database already exists");
+        log::info!("Database already exists");
     }
 
     if DB_POOL.get().is_none() {
         let pool = Pool::<Sqlite>::connect(DB_FILE).await?;
-         DB_POOL.set(pool).map_err(|_| anyhow::anyhow!("set pool fail".to_string()))?;
-         if let Some(init_pool) = DB_POOL.get() {
+        DB_POOL
+            .set(pool)
+            .map_err(|_| anyhow::anyhow!("set pool fail".to_string()))?;
+        if let Some(init_pool) = DB_POOL.get() {
             sqlx::query("CREATE TABLE if not exists hdfs_config (id INTEGER PRIMARY KEY   AUTOINCREMENT, name TEXT, hdfs_url TEXT,hdfs_config TEXT, del_flag INTEGER)")
         .execute(init_pool).await.map_err(|e| anyhow::anyhow!(e.to_string()))?;
         }
     }
-    
-    
+
     Ok(())
 }

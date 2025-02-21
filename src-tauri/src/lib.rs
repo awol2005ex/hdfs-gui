@@ -1,4 +1,4 @@
-use commands::{hdfs_acls::*, hdfs_config::*, hdfs_file::*, hdfs_orc::* ,hdfs_parquet::*};
+use commands::{hdfs_acls::*, hdfs_config::*, hdfs_file::*, hdfs_orc::*, hdfs_parquet::*};
 
 mod commands;
 mod db;
@@ -7,6 +7,12 @@ mod db;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_log::Builder::new()
+        .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
+        .target(tauri_plugin_log::Target::new(
+          tauri_plugin_log::TargetKind::Webview,
+        ))
+        .build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
@@ -66,8 +72,6 @@ pub fn run() {
             read_orc_file_data_by_page,
             //导出orc数据到csv
             export_orc_file_data_to_csv,
-
-
             //获取parquet文件字段列表
             get_hdfs_parquet_file_field_list,
             //获取parquet文件行数

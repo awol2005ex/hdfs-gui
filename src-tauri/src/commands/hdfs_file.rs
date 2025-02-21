@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use bytes::Bytes;
-use hdfs_native::client::FileStatus;
 use hdfs_native::{Client, WriteOptions};
 use serde::{Deserialize, Serialize};
 
@@ -54,54 +53,57 @@ pub async fn get_hdfs_file_list(
     parent_path: String,
     show_content_summary: bool,
 ) -> Result<Vec<HdfsFile>, String> {
-    //println!("get_hdfs_file_list:parent_path:{}", &parent_path);
+    //log::info!("get_hdfs_file_list:parent_path:{}", &parent_path);
     let client = get_hdfs_client(id).await?;
     let files = client
         .list_status(&parent_path, false)
         .await
         .map_err(|e| e.to_string())?;
 
-        let mut hdfs_files = Vec::new();
+    let mut hdfs_files = Vec::new();
 
-        for file in files.iter() {
-            let mut hdfs_file = HdfsFile {
-                name: std::path::Path::new(&file.path)
-                    .file_name()
-                    .unwrap_or_default()
-                    .to_str()
-                    .unwrap_or_default()
-                    .to_string(),
-                path: file.path.clone().replace("\\", "/"),
-                parent_path: parent_path.clone(),
-                owner: file.owner.clone(),
-                group: file.group.clone(),
-                isdir: file.isdir.clone(),
-                permission: file.permission.clone(),
-                modification_time: file.modification_time.clone(),
-                access_time: file.access_time.clone(),
-                length: file.length.clone(),
-                file_count: None,
-                directory_count: None,
-                quota: None,
-                space_consumed: None,
-                space_quota: None,
-            };
-    
-            if file.isdir && show_content_summary {
-                let content_summary: hdfs_native::client::ContentSummary = client.get_content_summary(&file.path).await.map_err(|e| e.to_string())?;
-                // 更新hdfs_file的内容摘要字段
-                hdfs_file.length= content_summary.length as usize; 
-                hdfs_file.file_count = Some(content_summary.file_count);
-                hdfs_file.directory_count = Some(content_summary.directory_count);
-                hdfs_file.quota = Some(content_summary.quota);
-                hdfs_file.space_consumed = Some(content_summary.space_consumed);
-                hdfs_file.space_quota = Some(content_summary.space_quota);
-            }
-    
-            hdfs_files.push(hdfs_file);
+    for file in files.iter() {
+        let mut hdfs_file = HdfsFile {
+            name: std::path::Path::new(&file.path)
+                .file_name()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default()
+                .to_string(),
+            path: file.path.clone().replace("\\", "/"),
+            parent_path: parent_path.clone(),
+            owner: file.owner.clone(),
+            group: file.group.clone(),
+            isdir: file.isdir.clone(),
+            permission: file.permission.clone(),
+            modification_time: file.modification_time.clone(),
+            access_time: file.access_time.clone(),
+            length: file.length.clone(),
+            file_count: None,
+            directory_count: None,
+            quota: None,
+            space_consumed: None,
+            space_quota: None,
+        };
+
+        if file.isdir && show_content_summary {
+            let content_summary: hdfs_native::client::ContentSummary = client
+                .get_content_summary(&file.path)
+                .await
+                .map_err(|e| e.to_string())?;
+            // 更新hdfs_file的内容摘要字段
+            hdfs_file.length = content_summary.length as usize;
+            hdfs_file.file_count = Some(content_summary.file_count);
+            hdfs_file.directory_count = Some(content_summary.directory_count);
+            hdfs_file.quota = Some(content_summary.quota);
+            hdfs_file.space_consumed = Some(content_summary.space_consumed);
+            hdfs_file.space_quota = Some(content_summary.space_quota);
         }
-    
-        Ok(hdfs_files)
+
+        hdfs_files.push(hdfs_file);
+    }
+
+    Ok(hdfs_files)
 }
 
 //获取hdfs单个文件状态
@@ -113,7 +115,7 @@ pub async fn get_hdfs_file(id: i64, file_path: String) -> Result<HdfsFile, Strin
         .await
         .map_err(|e| e.to_string())?;
 
-    //println!("get_hdfs_file_list:files:{:?}", &files);
+    //log::info!("get_hdfs_file_list:files:{:?}", &files);
     let hdfs_file = HdfsFile {
         //根据路径获取文件名
         name: std::path::Path::new(&file.path)
@@ -140,7 +142,7 @@ pub async fn get_hdfs_file(id: i64, file_path: String) -> Result<HdfsFile, Strin
         space_consumed: None,
         space_quota: None,
     };
-    //println!("get_hdfs_file_list:hdfsFiles:{:?}", &hdfs_files);
+    //log::info!("get_hdfs_file_list:hdfsFiles:{:?}", &hdfs_files);
     Ok(hdfs_file)
 }
 //上传文件
@@ -173,7 +175,7 @@ pub async fn upload_hdfs_file(
     loop {
         let mut buf = [0u8; 1024];
         if let Ok(nbytes_read) = local_file_buf_reader.read(&mut buf[..]) {
-            //println!("nbytes_read:{}", nbytes_read);
+            //log::info!("nbytes_read:{}", nbytes_read);
             // 如果没有字节可读，跳出循环
             if nbytes_read == 0 {
                 break;
@@ -182,7 +184,7 @@ pub async fn upload_hdfs_file(
             let b = bytes::Bytes::copy_from_slice(s);
             // 从buffer构造字符串
             let _write_size = hdfs_file_writer.write(b).await.map_err(|e| e.to_string())?;
-            //println!("writeSize:{}", writeSize);
+            //log::info!("writeSize:{}", writeSize);
         } else {
             break;
         }
@@ -416,7 +418,7 @@ pub async fn download_file(
             }
             // 从buffer构造字符串
             let _write_size = target_file.write(&b).map_err(|e| e.to_string())?;
-            //println!("writeSize:{}", writeSize);
+            //log::info!("writeSize:{}", writeSize);
         } else {
             break;
         }
@@ -485,7 +487,7 @@ pub async fn download_folder(
                     }
                     // 从buffer构造字符串
                     let _write_size = target_file.write(&b).map_err(|e| e.to_string())?;
-                    //println!("writeSize:{}", writeSize);
+                    //log::info!("writeSize:{}", writeSize);
                 } else {
                     break;
                 }
@@ -525,7 +527,7 @@ pub fn set_files_permission_impl(
                 while let Some(entry) = dir.next().await {
                     let entry = entry.map_err(|e| e.to_string())?;
                     let entry_path = entry.path.replace("\\", "/");
-                    //println!("entry_path:{}", &entry_path);
+                    //log::info!("entry_path:{}", &entry_path);
                     set_files_permission_impl(client, vec![entry_path], permission, false).await?;
                 }
             }
