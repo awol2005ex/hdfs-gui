@@ -1,8 +1,8 @@
 [package]
 name = "hdfs-gui"
 version = "0.6.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "A Tauri App For Hdfs"
+authors = ["awol2005ex@163.com"]
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
