@@ -130,6 +130,18 @@ const reloadFile = async () => {
         return;
       }
 
+      //自动跳转到avro查看模式
+      if (previewResult.isavro) {
+        router.replace({
+          path: "/HdfsFileView/" + route.params.id,
+          query: {
+            path: props.filePath,
+            mode: "avro",
+          },
+        });
+        return;
+      }
+
       codeValue.value = previewResult.content;
       fileSize.value = previewResult.length;
       isOrc.value = previewResult.isorc;

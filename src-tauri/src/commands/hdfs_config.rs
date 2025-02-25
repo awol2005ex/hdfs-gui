@@ -99,7 +99,9 @@ pub async fn init_connection(id: i64) -> Result<(), String> {
                         "{}/hdfs_gui_ccache",
                         current_dir.to_str().unwrap_or_default()
                     );
-                    std::env::set_var("KRB5CCNAME", cache_file_path.clone());
+                    unsafe {
+                        std::env::set_var("KRB5CCNAME", cache_file_path.clone());
+                    }
                     let s = format!("kinit -kt {} {}", keytab_s, principal_s);
                     log::info!("kinit command: {}", &s);
                     let o = Command::new("cmd")
@@ -113,7 +115,9 @@ pub async fn init_connection(id: i64) -> Result<(), String> {
                         return Err("Kerberos authentication failed".to_owned());
                     }
                 } else {
-                    std::env::set_var("KRB5CCNAME", "/tmp/hdfs_gui_ccache");
+                    unsafe {
+                        std::env::set_var("KRB5CCNAME", "/tmp/hdfs_gui_ccache");
+                    }
                     let s = format!("kinit -kt {} {}", keytab_s, principal_s);
                     log::info!("kinit command: {}", &s);
                     let o = Command::new("sh")

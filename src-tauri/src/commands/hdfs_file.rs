@@ -329,6 +329,8 @@ pub struct HdfsFileContentPreview {
     pub isorc: bool,
     //是否parquet类型文件
     pub isparquet: bool,
+    //是否avro类型文件
+    pub isavro: bool,
 }
 #[tauri::command]
 pub async fn get_hdfs_file_content_preview(
@@ -350,11 +352,13 @@ pub async fn get_hdfs_file_content_preview(
     let content = String::from_utf8_lossy(buf.to_vec().as_slice()).to_string();
     let isorc = content.starts_with("ORC");
     let isparquet = content.starts_with("PAR1");
+    let isavro: bool =file_path.ends_with(".avro");
     Ok(HdfsFileContentPreview {
         content: content,
         length: file_status.length as usize,
         isorc: isorc,
         isparquet: isparquet,
+        isavro: isavro,
     })
 }
 

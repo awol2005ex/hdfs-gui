@@ -78,6 +78,12 @@
             :filePath="route.query.path?.toString()"
           />
         </div>
+        <div v-if="mode == 'avro'">
+          <HdfsAvroFileView
+            :hdfsConfigId="parseInt(route.params.id[0])"
+            :filePath="route.query.path?.toString()"
+          />
+        </div>
       </el-main>
     </el-container>
   </div>
@@ -92,6 +98,7 @@ import HdfsByteFileView from "../components/HdfsByteFileView.vue";
 import HdfsTextFileEdit from "../components/HdfsTextFileEdit.vue";
 import HdfsOrcFileView from "../components/HdfsOrcFileView.vue";
 import HdfsParquetFileView from "../components/HdfsParquetFileView.vue";
+import HdfsAvroFileView from "../components/HdfsAvroFileView.vue";
 import { download_file } from "../api/hdfs_file";
 //选择文件
 import { open } from "@tauri-apps/plugin-dialog";

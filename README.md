@@ -21,7 +21,8 @@
 ## Key Features
 
 * Hdfs Files list, read and display , write , upload ,set permissions , delete files and directories , set file acls , show folder content summary.
-* Hdfs Orc viewer ,show struct ,export to csv.
+* Hdfs Orc, Parquet viewer,show struct ,export to csv.
+* Hdfs Avro viewer 
 Support
 * Cross platform
   - Windows, macOS and Linux ready.

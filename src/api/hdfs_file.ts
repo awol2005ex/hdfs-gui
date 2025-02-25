@@ -24,6 +24,7 @@ export interface HdfsFileContentPreview {
   content: string;
   isorc: Boolean;
   isparquet: Boolean;
+  isavro: Boolean;
 }
 export interface HdfsFileContent {
   length: number;

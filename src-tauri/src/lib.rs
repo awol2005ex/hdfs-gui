@@ -1,4 +1,4 @@
-use commands::{hdfs_acls::*, hdfs_config::*, hdfs_file::*, hdfs_orc::*, hdfs_parquet::*};
+use commands::{hdfs_acls::*, hdfs_config::*, hdfs_file::*, hdfs_orc::*, hdfs_parquet::* ,hdfs_avro::*};
 
 mod commands;
 mod db;
@@ -84,6 +84,8 @@ pub fn run() {
             export_parquet_file_data_to_csv,
             //下载hdfs目录到目标本地目录
             download_folder,
+            //查看avro数据
+            get_avro_content,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

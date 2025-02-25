@@ -9,3 +9,6 @@ pub mod hdfs_orc;
 
 //hdfs parquet文件操作
 pub mod hdfs_parquet;
+
+//hdfs avro文件操作
+pub mod hdfs_avro;
