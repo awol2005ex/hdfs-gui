@@ -1,7 +1,7 @@
 {
   "name": "hdfs-gui",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -33,5 +33,8 @@
     "vite": "^5.3.1",
     "vue-tsc": "2.0.29",
     "vue3-json-viewer": "^2.2.2"
+  },
+  "engines": {
+    "node": ">=22.14.0"
   }
 }

@@ -1,16 +1,6 @@
-use bytes::Bytes;
-use futures::{StreamExt, TryFutureExt, TryStreamExt};
-use hdfs_native::file::FileReader;
-use hdfs_native::Client;
-use std::{
-    collections::HashMap,
-    future::IntoFuture,
-    io::{BufReader, ErrorKind, Read},
-    process::Command,
-    time::Duration,
-};
 
-use apache_avro::from_value;
+use std::io::{ErrorKind, Read};
+
 use apache_avro::Reader;
 
 use super::hdfs_file::get_hdfs_client;

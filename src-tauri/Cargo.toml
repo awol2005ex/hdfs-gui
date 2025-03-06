@@ -1,6 +1,6 @@
 [package]
 name = "hdfs-gui"
-version = "0.6.0"
+version = "0.7.0"
 description = "A Tauri App For Hdfs"
 authors = ["awol2005ex@163.com"]
 edition = "2024"
@@ -40,7 +40,11 @@ parquet = {version="=53.3.0",features= ["async"] }
 tauri-plugin-log = "2"
 log = "0.4.25"
 apache-avro = "0.17.0"
+[profile.dev]
+incremental = true
 [profile.release]
-strip = true
-lto = true
-opt-level = 'z'
+codegen-units = 1 # Allows LLVM to perform better optimization.
+lto = true # Enables link-time-optimizations.
+opt-level = "s" # Prioritizes small binary size. Use `3` if you prefer speed.
+panic = "abort" # Higher performance by disabling panic handlers.
+strip = true # Ensures debug symbols are removed.
