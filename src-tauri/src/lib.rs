@@ -1,4 +1,6 @@
-use commands::{hdfs_acls::*, hdfs_config::*, hdfs_file::*, hdfs_orc::*, hdfs_parquet::* ,hdfs_avro::*};
+use commands::{
+    hdfs_acls::*, hdfs_avro::*, hdfs_config::*, hdfs_file::*, hdfs_orc::*, hdfs_parquet::*,
+};
 
 mod commands;
 mod db;
@@ -6,13 +8,22 @@ mod db;
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let current_dir = std::env::current_dir().map_err(|e| e.to_string()).unwrap();
     tauri::Builder::default()
-        .plugin(tauri_plugin_log::Builder::new()
-        .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
-        .target(tauri_plugin_log::Target::new(
-          tauri_plugin_log::TargetKind::Webview,
-        ))
-        .build())
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::Webview,
+                ))
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::Folder {
+                        path: current_dir.join("logs"),
+                        file_name: None,
+                    },
+                ))
+                .build(),
+        )
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![

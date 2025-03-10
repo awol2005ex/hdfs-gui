@@ -173,7 +173,7 @@ pub async fn read_orc_file_data_by_page(
             writer.write_batches(&vec![&batch]).unwrap_or_default();
             writer.finish().unwrap_or_default();
             let buf = writer.into_inner();
-            let json_str = String::from_utf8(buf).unwrap();
+            let json_str = String::from_utf8(buf).unwrap_or_default();
             let json: Vec<serde_json::Value> = serde_json::from_str(&json_str).unwrap_or_default();
             for item in json {
                 let mut row = HashMap::new();
