@@ -3596,9 +3596,9 @@ checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
 name = "orc-rust"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b307d095f0481b043b27d94eeb95cd67a8b19c6a34685ad0ccd884740a9306e"
+checksum = "87f01688d5de2487622d46956dfbcb52ec2f08b65b5e047688db5a24e063bc39"
 dependencies = [
  "arrow",
  "async-trait",

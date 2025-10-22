@@ -31,7 +31,7 @@ tokio-stream = "0.1.17"
 chrono = { version = "0.4.39", features = ["serde"] }
 
 hdfs-native = "0.11.1"
-orc-rust = {version="=0.5.0"}
+orc-rust = {version="=0.6.0"}
 arrow = { version="=53.3.0", features = ["prettyprint", "chrono-tz"] }
 bytes = "1.9.0"
 futures-util = "0.3.31"
