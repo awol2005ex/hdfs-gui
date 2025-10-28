@@ -40,6 +40,11 @@ parquet = {version="=53.3.0",features= ["async"] }
 tauri-plugin-log = "2"
 log = "0.4.25"
 apache-avro = "0.17.0"
+awol2005ex_kerbeiros = "0.4.2"
+awol2005ex_kerberos_keytab = "0.4.2"
+awol2005ex_kerberos_crypto = "0.4.2"
+ascii = "1.1.0"
+hex = "0.4.3"
 [profile.dev]
 incremental = true
 [profile.release]
